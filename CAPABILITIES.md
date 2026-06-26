@@ -13,6 +13,7 @@ These ship with memclaw and load automatically (`npm run caps` to see status).
 | Web | `web` | `web-fetch` tool | — |
 | Weather | `weather` | `weather` tool | — |
 | Spreadsheet | `spreadsheet` | read/analyze local `.xlsx` & `.csv` (sheets, rows, column stats) | — |
+| MCP | `mcp` | tools from any external MCP server (GitHub, filesystem, Notion, …) | a `memclaw.mcp.json` file |
 | Shell | `shell` | `shell` tool (approval-gated) | `MEMCLAW_ENABLE_SHELL=true` |
 
 ## Community

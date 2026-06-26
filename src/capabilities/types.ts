@@ -13,6 +13,13 @@
  */
 import type { MemclawConfig } from '../config.ts';
 
+/**
+ * A value, or a function that produces it (sync or async). Lets a capability
+ * contribute tools that must be loaded at startup — e.g. tools fetched from an
+ * MCP server. Static records keep working unchanged.
+ */
+export type Provider<T> = T | ((config: MemclawConfig) => T | Promise<T>);
+
 export interface CapabilityEnvVar {
   /** Environment variable name, e.g. "GITHUB_TOKEN". */
   name: string;
@@ -33,12 +40,12 @@ export interface Capability {
   author?: string;
   homepage?: string;
 
-  /** Tools contributed to the agent, keyed by tool name. */
-  tools?: Record<string, unknown>;
+  /** Tools contributed to the agent, keyed by tool name (or a provider fn). */
+  tools?: Provider<Record<string, unknown>>;
   /** Specialist sub-agents — Mastra exposes each to the orchestrator as a tool. */
-  agents?: Record<string, unknown>;
+  agents?: Provider<Record<string, unknown>>;
   /** Workflows — also exposed to the agent as callable tools. */
-  workflows?: Record<string, unknown>;
+  workflows?: Provider<Record<string, unknown>>;
 
   /** Environment variables this capability uses. Surfaced by `doctor`. */
   env?: CapabilityEnvVar[];

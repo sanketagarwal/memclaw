@@ -13,6 +13,7 @@ import { timeCapability } from './time/index.ts';
 import { webCapability } from './web/index.ts';
 import { weatherCapability } from './weather/index.ts';
 import { spreadsheetCapability } from './spreadsheet/index.ts';
+import { mcpCapability } from './mcp/index.ts';
 import { shellCapability } from './shell/index.ts';
 
 export const builtinCapabilities: Capability[] = [
@@ -20,5 +21,6 @@ export const builtinCapabilities: Capability[] = [
   webCapability,
   weatherCapability,
   spreadsheetCapability,
+  mcpCapability,
   shellCapability,
 ];

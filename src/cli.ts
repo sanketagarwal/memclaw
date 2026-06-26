@@ -102,6 +102,8 @@ async function runDoctor(): Promise<void> {
   ok('capabilities', `${bundle.active.length} active (${bundle.active.map((c) => c.id).join(', ')})`);
 
   console.log('');
+  // MCP servers keep child connections open; force-exit this one-shot command.
+  process.exit(0);
 }
 
 async function runCapabilities(): Promise<void> {
@@ -111,14 +113,11 @@ async function runCapabilities(): Promise<void> {
 
   console.log(`\n${PINK}🐾 memclaw capabilities${RESET}\n`);
 
-  for (const cap of bundle.active) {
+  for (const { capability: cap, tools, agents, workflows } of bundle.resolved) {
     console.log(
       `  ${GREEN}●${RESET} ${cap.name} ${DIM}(${cap.id}) v${cap.version ?? '0.0.0'}${RESET}`,
     );
     console.log(`    ${DIM}${cap.description}${RESET}`);
-    const tools = Object.keys(cap.tools ?? {});
-    const agents = Object.keys(cap.agents ?? {});
-    const workflows = Object.keys(cap.workflows ?? {});
     if (tools.length) console.log(`    ${DIM}tools:${RESET} ${tools.join(', ')}`);
     if (agents.length) console.log(`    ${DIM}agents:${RESET} ${agents.join(', ')}`);
     if (workflows.length) console.log(`    ${DIM}workflows:${RESET} ${workflows.join(', ')}`);
@@ -135,6 +134,8 @@ async function runCapabilities(): Promise<void> {
     );
   }
   console.log('');
+  // MCP servers keep child connections open; force-exit this one-shot command.
+  process.exit(0);
 }
 
 async function runBus(): Promise<void> {

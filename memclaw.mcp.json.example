@@ -1,0 +1,17 @@
+{
+  "$comment": "Copy to memclaw.mcp.json and edit. Each server's tools become available to the agent (namespaced as server_tool). The 'mcp' capability activates automatically when this file exists. Stdio servers use command/args; HTTP servers use url.",
+  "servers": {
+    "filesystem": {
+      "command": "npx",
+      "args": ["-y", "@modelcontextprotocol/server-filesystem", "/absolute/path/you/allow"]
+    },
+    "github": {
+      "command": "npx",
+      "args": ["-y", "@modelcontextprotocol/server-github"],
+      "env": { "GITHUB_PERSONAL_ACCESS_TOKEN": "ghp_your_token_here" }
+    },
+    "remote-example": {
+      "url": "https://your-mcp-server.example.com/mcp"
+    }
+  }
+}

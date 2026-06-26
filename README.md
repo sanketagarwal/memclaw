@@ -4,7 +4,7 @@
 
 **An open-source, local-first personal AI agent built on the full [Mastra](https://mastra.ai) stack.**
 
-Observational memory · browser use · tool-calling · a pub/sub event bus you can *watch* · first-class observability in Mastra Studio.
+Observational memory · browser use · tool-calling · MCP · a pub/sub event bus you can *watch* · first-class observability in Mastra Studio.
 
 </div>
 
@@ -13,12 +13,25 @@ Observational memory · browser use · tool-calling · a pub/sub event bus you c
 memclaw is a personal AI assistant that runs on your machine, remembers you across
 conversations, can browse the web and run real tools, and talks to you wherever you
 are — your terminal today, Telegram/Slack/Discord with one line of config. Every
-message flows over an **event bus**, so the whole system is observable and replayable
-instead of being a black box.
+message flows over an **event bus**, and every action is **traced in Mastra Studio**,
+so the whole system is observable instead of a black box.
 
-It's inspired by [OpenClaw](https://openclaw.ai/), but takes a different bet:
-instead of hand-rolling memory, browser control, integrations, and eventing, memclaw
-stands on Mastra's batteries-included agent framework — and exposes all of it.
+It's inspired by [OpenClaw](https://openclaw.ai/), but takes a different bet: instead
+of hand-rolling memory, browser control, integrations, and eventing, memclaw stands on
+Mastra's batteries-included agent framework — and exposes all of it.
+
+## Table of contents
+
+- [Quick start](#quick-start)
+- [Why memclaw?](#why-memclaw)
+- [Run every feature](#run-every-feature) ← **how to use each part**
+  - [Chat](#1-chat-in-your-terminal) · [Memory](#2-memory-that-remembers-across-tasks) ·
+    [Capabilities](#3-capabilities-give-the-agent-tools) · [MCP](#4-mcp--borrow-tools-from-the-whole-ecosystem) ·
+    [Browser](#5-browser-use) · [Channels](#6-connectors--channels) · [Observability](#7-observability--mastra-studio)
+- [Configuration](#configuration)
+- [Commands](#commands)
+- [Architecture](#architecture)
+- [Roadmap](#roadmap) · [Contributing](#contributing) · [License](#license)
 
 ## Quick start
 
@@ -32,7 +45,7 @@ npm run setup     # writes .env, asks for your OpenAI key
 npm run chat      # start talking in your terminal
 ```
 
-That's the whole loop. Then, to see everything under the hood:
+Then, to see everything under the hood:
 
 ```bash
 npm run dev       # opens Mastra Studio: traces, memory, metrics, screencast
@@ -41,98 +54,195 @@ npm run dev       # opens Mastra Studio: traces, memory, metrics, screencast
 ## Why memclaw?
 
 memclaw's bet is **architecture over accretion**. Because it's built on Mastra, the
-hard parts — long-term memory, browser automation, channel integrations, tracing,
-and a distributed-capable event bus — are first-class and *visible*, not bolted on.
+hard parts — long-term memory, browser automation, integrations, tracing, and a
+distributed-capable event bus — are first-class and *visible*, not bolted on.
 
 | | 🐾 **memclaw** | OpenClaw |
 | --- | --- | --- |
-| **Memory** | [Observational Memory](https://mastra.ai/docs/memory/observational-memory): background Observer + Reflector agents that compress history into a dense, humanlike log — plus structured working memory | Persistent memory |
-| **Observability** | **First-class.** Every agent run is traced; every bus event is metered. Watch it live in Mastra Studio | Logs |
-| **Event bus** | **Built in and inspectable.** Pub/sub backbone with replay; scale from in-process → Unix socket → Redis/GCP by changing one env var | — |
-| **Browser** | Real Playwright browser with a **live screencast streamed into Studio** | Browser automation |
-| **Connectors** | Native Mastra **channels**: Telegram (no tunnel needed), Slack, Discord — add by dropping credentials in `.env` | WhatsApp, Telegram, Discord, Slack, Signal, iMessage |
-| **Extensibility** | A **capability system**: ship a folder (or npm package) of tools + sub-agents + workflows; auto-discovered and registered | Self-writing skills |
+| **Memory** | [Observational Memory](https://mastra.ai/docs/memory/observational-memory): background Observer + Reflector agents compress history into a dense log, plus structured working memory | Persistent memory |
+| **Observability** | **First-class.** Every run, tool call, and bus event is traced/metered. Watch it live in Mastra Studio | Logs |
+| **Tools** | A **capability system** (ship a folder or npm package) **+ MCP** (any of hundreds of MCP servers, config-only) | Skills + integrations |
+| **Event bus** | **Built in and inspectable.** Pub/sub with replay; scale in-process → Unix socket → Redis by changing one env var | — |
+| **Browser** | Real Playwright browser with a **live screencast in Studio** | Browser automation |
+| **Connectors** | Native Mastra channels: Telegram (no tunnel), Slack, Discord — add by dropping credentials in `.env` | WhatsApp, Telegram, Discord, Slack, Signal, iMessage |
 | **Stack** | TypeScript, fully typed, hackable end-to-end | — |
-| **Model** | Provider-agnostic via Mastra model routing (`openai/…`, `anthropic/…`, …) | Hosted, subscription, or local models |
-| **Privacy** | Local-first; your keys, your machine, your data | Local-first |
+| **Model** | Provider-agnostic via Mastra routing (`openai/…`, `anthropic/…`) | Hosted/subscription/local |
 
-### Where OpenClaw is still ahead (honest version)
+**Where OpenClaw is still ahead (honest version):** breadth of integrations (50+,
+incl. WhatsApp/Signal/iMessage), self-writing skills, and years of maturity. memclaw's
+wager is that a transparent, observable, event-driven foundation — plus MCP — is the
+faster path to *catching and passing* that.
 
-memclaw is young. OpenClaw has years of polish and a big community, and today it
-genuinely leads on:
+---
 
-- **Breadth of integrations** — 50+ services and platforms (WhatsApp, Signal, iMessage)
-  out of the box. memclaw ships terminal + Telegram/Slack/Discord and a clean way to add more.
-- **Self-writing skills** — agents that author and modify their own capabilities through
-  conversation. memclaw's tool/connector system is extensible but human-authored (for now).
-- **Maturity & community** — battle-tested workflows and a large skill ecosystem.
+## Run every feature
 
-memclaw's wager is that a transparent, event-driven, observable foundation is the
-faster path to *catching and passing* that — and that you should be able to **see
-exactly what your agent is doing** the whole way.
+Each feature below is independent and has a copy-paste path.
 
-## Architecture
+### 1. Chat in your terminal
 
-Everything is wired through one event bus. Connectors never call the agent directly —
-they publish to the bus and the dispatcher does the rest. That decoupling is what makes
-the system observable, replayable, and easy to extend.
+The zero-config surface. Works the moment you install.
 
-```
-   ┌──────────┐     inbound      ┌────────────┐    generate()   ┌──────────────┐
-   │ Connector│ ───────────────▶ │ Dispatcher │ ──────────────▶ │ memclaw Agent│
-   │ cli /    │                  │            │                 │  • obs memory│
-   │ telegram │ ◀─────────────── │            │ ◀────────────── │  • tools     │
-   │ slack …  │     outbound     └────────────┘     reply       │  • browser   │
-   └──────────┘          │                                      └──────────────┘
-                         │  (every event)
-                         ▼
-                  ┌──────────────┐         GET /memclaw/bus
-                  │  Bus Monitor │ ───────────────────────────▶  live metrics
-                  └──────────────┘         + Mastra Studio traces
+```bash
+npm run chat
+# > what can you do?
+# > /exit to quit
 ```
 
-- **Bus** — Mastra pub/sub. Default is in-process with a replay cache (zero infra).
-  Mastra's own workflow/agent/task events ride the **same** bus.
-- **Dispatcher** — subscribes to inbound messages, runs the agent scoped to the right
-  memory thread, publishes the reply and run-lifecycle events.
-- **Bus Monitor** — counts everything (per-topic, run success/failure, throughput, avg
-  latency), logs it into Studio, and serves it at `GET /memclaw/bus`.
+Under the hood your message is published to the event bus, the dispatcher runs the
+agent, and the reply comes back over the bus — the same path every other connector uses.
 
-See [docs/architecture.md](docs/architecture.md) for the full tour.
+### 2. Memory that remembers across tasks
 
-## Features
+memclaw has two memory systems, both on by default — no setup.
 
-### 🧠 Memory that actually remembers
-Observational Memory runs background agents that watch conversations and maintain a
-compressed observation log, so memclaw stays coherent over long sessions without
-context rot — and remembers you across conversations. Working memory holds small
-structured state (your name, preferences, goals). Watch both fill up live in Studio's
-**Memory** tab.
+- **Working memory** — small structured state (your name, preferences, current goals).
+- **Observational Memory (OM)** — background **Observer** and **Reflector** agents watch
+  your conversations and maintain a dense, compressed "observation log" that replaces raw
+  history as it grows. This is what lets memclaw stay coherent over long sessions without
+  context rot, and remember you over time.
 
-### 🌐 Browser use
-Set `MEMCLAW_BROWSER=true`, run `npx playwright install chromium`, and the agent gains
-a real browser with accessibility-first targeting. Studio streams a **live screencast**
-so you can watch it navigate.
+**Does it maintain context across multiple different tasks? Yes — here's how:**
 
-### 🧰 Capabilities (the extension system)
+- **Within a task** (one conversation/thread), memclaw keeps full recent history *plus*
+  the observation log, so it never loses the thread of what you're doing.
+- **Across tasks**, memory is keyed by a **thread** (the conversation) and a **resource**
+  (you, stable across conversations). Working-memory facts and observations attributed to
+  your resource carry forward, so a new conversation already knows your name, preferences,
+  and the projects you've mentioned — you don't repeat yourself.
+- For deeper **cross-conversation continuity** (observations shared across *all* your
+  threads), enable OM **resource scope** in `src/agents/memclaw-agent.ts`:
+
+  ```typescript
+  observationalMemory: { model: config.memoryModel, scope: 'resource' }
+  ```
+
+  (Resource scope is powerful but marked experimental upstream — great for a single user's
+  long-running assistant; read the [OM docs](https://mastra.ai/docs/memory/observational-memory).)
+
+**See it working:** run `npm run dev`, open the agent, and use the **Memory** tab — live
+token bars for messages vs. observations, the current observation log, and background
+Observer/Reflector status as you chat.
+
+### 3. Capabilities (give the agent tools)
+
 Everything the agent can do is a **capability** — a self-contained bundle of tools,
-specialist sub-agents, and/or workflows. memclaw ships `time`, `web`, `weather`,
-`spreadsheet` (analyze local Excel/CSV), and an opt-in `shell`; `npm run caps` shows
-what's active. Adding one is copying a folder; the
-agent code never changes. Publish a capability as an npm package and anyone can enable it
-with one env var. This is the path to OpenClaw-style breadth — and the main way to
-contribute. See [docs/capabilities.md](docs/capabilities.md) and the
-[catalog](CAPABILITIES.md).
+specialist sub-agents, and/or workflows.
 
-### 🔌 Connectors / channels
-The terminal works out of the box. Add a platform by putting its credentials in `.env`:
-Telegram runs over long-polling (**no public URL needed**); Slack/Discord use webhooks.
-See [docs/connectors.md](docs/connectors.md).
+```bash
+npm run caps      # list active capabilities, their tools, and env status
+```
 
-### 📈 Observability
-`npm run dev` opens Mastra Studio: full execution traces, the live memory view, the
-browser screencast, and your logs. Bus metrics are one curl away:
-`curl http://localhost:4111/memclaw/bus`.
+Built-in: `time`, `web`, `weather`, `spreadsheet` (analyze local Excel/CSV), `mcp`,
+and an opt-in `shell`. **Add your own** in four steps (full guide:
+[docs/capabilities.md](docs/capabilities.md)):
+
+```bash
+cp -r src/capabilities/_template src/capabilities/github   # 1. copy the template
+# 2. edit index.ts (manifest) + write your tool
+# 3. register it in src/capabilities/registry.ts
+npm run caps                                                # 4. verify it loads
+```
+
+Capabilities can also be **published as npm packages** and enabled with one env var
+(`MEMCLAW_CAPABILITIES=memclaw-cap-notion`) — so people extend memclaw without forking it.
+See the [catalog](CAPABILITIES.md).
+
+### 4. MCP — borrow tools from the whole ecosystem
+
+The fastest way to give memclaw *a lot* of tools. Point the built-in `mcp` capability at
+any [Model Context Protocol](https://modelcontextprotocol.io) server (GitHub, filesystem,
+Postgres, Notion, Slack, Brave Search, … hundreds exist) and the agent gains all of its
+tools — **no code**.
+
+```bash
+cp memclaw.mcp.json.example memclaw.mcp.json
+# edit it — e.g. the filesystem server:
+```
+```json
+{
+  "servers": {
+    "filesystem": {
+      "command": "npx",
+      "args": ["-y", "@modelcontextprotocol/server-filesystem", "/path/you/allow"]
+    }
+  }
+}
+```
+```bash
+npm run caps      # MCP now active: filesystem_read_file, filesystem_write_file, …
+npm run chat      # "list the files in that folder and summarize the largest one"
+```
+
+Tool names are namespaced `server_tool`, and every MCP call is traced in Studio like any
+other tool. Stdio servers use `command`/`args`; remote servers use a `url`.
+
+### 5. Browser use
+
+Give the agent a real Playwright browser with accessibility-first targeting and a **live
+screencast in Studio**.
+
+```bash
+# in .env:  MEMCLAW_BROWSER=true
+npx playwright install chromium      # one-time
+npm run dev                          # watch the agent browse in Studio
+```
+
+The agent automatically receives the browser's toolset (navigate, click, type, read).
+
+### 6. Connectors / channels
+
+The terminal works out of the box. Add a platform by putting its credentials in `.env`
+(full guide: [docs/connectors.md](docs/connectors.md)):
+
+- **Telegram** — long-polling, **no public URL needed**. Set `TELEGRAM_BOT_TOKEN`, run
+  `npm run dev`, message your bot.
+- **Slack / Discord** — webhooks. Set their tokens, run `npm run dev`, and tunnel it
+  (`npx cloudflared tunnel --url http://localhost:4111`); point the platform webhook at
+  `/api/agents/memclaw/channels/{platform}/webhook`.
+
+A channel is enabled only when its credentials are present, so an empty `.env` starts clean.
+
+### 7. Observability — Mastra Studio
+
+This is the part that makes memclaw auditable. Observability is **storage-backed**: every
+agent run, tool call (including MCP and spreadsheet), memory operation, and bus event is
+written to storage as a trace; Studio reads from that storage.
+
+**Local — just open Studio:**
+
+```bash
+npm run dev          # http://localhost:4111
+```
+
+Studio gives you three views (all powered by the LibSQL + DuckDB stores memclaw configures):
+
+- **Traces** — per request: model calls, tool executions, timings, inputs/outputs.
+- **Metrics** — runs, model cost, token usage, latency p50/p95 over time.
+- **Logs** — searchable, correlated to traces.
+
+Plus the live **event-bus metrics**:
+
+```bash
+curl http://localhost:4111/memclaw/bus     # per-topic counts, throughput, avg latency
+```
+
+**Deployed — what's the flow?** You don't keep `mastra dev` running in production; instead
+you point observability at durable storage and view it one of these ways:
+
+1. **Mastra Platform (hosted)** — add `MastraPlatformExporter()` to the observability
+   config in `src/mastra/index.ts` and set `MASTRA_PLATFORM_ACCESS_TOKEN`. Traces/logs/
+   metrics flow to Mastra Cloud across deploys. *(memclaw ships with this exporter commented
+   out so local runs need no token.)*
+2. **Your own stack** — Mastra has OTel and Datadog tracing bridges; export spans to whatever
+   you already run.
+3. **Self-host Studio** — keep a durable store (use **Postgres** for metrics — plain
+   relational/in-memory stores don't support the metrics OLAP) and run Studio against it.
+
+So the short answer: **locally, just `npm run dev`.** Deployed, pick a durable store + an
+exporter (hosted, OTel/Datadog, or self-hosted Studio) and your traces are there.
+
+---
 
 ## Configuration
 
@@ -146,6 +256,8 @@ All configuration is via `.env` (start from [`.env.example`](.env.example)):
 | `MEMCLAW_PUBSUB` | `memory` | Bus backend: `memory` \| `unix` \| `redis` |
 | `MEMCLAW_BROWSER` | `false` | Enable the Playwright browser |
 | `MEMCLAW_ENABLE_SHELL` | `false` | Expose the shell tool (dangerous) |
+| `MEMCLAW_CAPABILITIES` | — | Comma-separated external capability packages |
+| `MEMCLAW_MCP_CONFIG` | `memclaw.mcp.json` | Path to the MCP servers file |
 | `TELEGRAM_BOT_TOKEN` | — | Enable the Telegram channel |
 | `SLACK_BOT_TOKEN` / `SLACK_SIGNING_SECRET` | — | Enable the Slack channel |
 | `DISCORD_BOT_TOKEN` / `DISCORD_PUBLIC_KEY` | — | Enable the Discord channel |
@@ -170,15 +282,38 @@ The same code runs on every backend — flip one env var:
 | `npm run doctor` | Verify configuration |
 | `npm run build` | Production build (`mastra build`) |
 
+## Architecture
+
+Everything is wired through one event bus; connectors publish to it and the dispatcher
+runs the agent. That decoupling is what makes the system observable and extensible. Full
+tour: [docs/architecture.md](docs/architecture.md).
+
+```
+   ┌──────────┐     inbound      ┌────────────┐    generate()   ┌──────────────┐
+   │ Connector│ ───────────────▶ │ Dispatcher │ ──────────────▶ │ memclaw Agent│
+   │ cli /    │                  │            │                 │ • memory     │
+   │ telegram │ ◀─────────────── │            │ ◀────────────── │ • capabilities│
+   │ slack …  │     outbound     └────────────┘     reply       │ • MCP/browser│
+   └──────────┘          │                                      └──────────────┘
+                         ▼  (every event)
+                  ┌──────────────┐   GET /memclaw/bus  +  Mastra Studio traces
+                  │  Bus Monitor │ ─────────────────────────────────────────────▶
+                  └──────────────┘
+```
+
 ## Roadmap
 
-- [ ] Self-authoring skills (agent writes its own tools)
+- [ ] Self-authoring capabilities (agent writes its own tools)
 - [ ] More connectors: WhatsApp, Signal, iMessage, email, web widget
+- [ ] More built-in capabilities: files, GitHub, calendar, search (see [Wanted](CAPABILITIES.md#wanted))
 - [ ] Scheduled/proactive tasks via Mastra background tasks
-- [ ] Multi-agent networks for specialized sub-tasks
 - [ ] One-line installer (`npm create memclaw`)
 
-Contributions welcome — see [CONTRIBUTING.md](CONTRIBUTING.md).
+## Contributing
+
+The fastest way to grow memclaw is a **capability** — ship a folder or an npm package.
+See [CONTRIBUTING.md](CONTRIBUTING.md), [docs/capabilities.md](docs/capabilities.md), and
+the [catalog](CAPABILITIES.md).
 
 ## License
 

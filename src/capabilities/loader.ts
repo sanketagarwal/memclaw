@@ -4,11 +4,14 @@
  *   1. built-in capabilities (the registry)
  *   2. external npm packages listed in MEMCLAW_CAPABILITIES
  *
- * Each capability can gate itself with `enabled(config)`; gated-off ones are
- * reported as skipped (handy for `doctor`) rather than silently dropped.
+ * A capability can contribute tools/agents/workflows as static records or as
+ * provider functions (sync or async) — the latter is how the MCP capability
+ * fetches tools from external servers at startup. Each capability can also gate
+ * itself with `enabled(config)`; gated-off or failed capabilities are reported
+ * as skipped rather than silently dropped.
  */
 import type { MemclawConfig } from '../config.ts';
-import type { Capability } from './types.ts';
+import type { Capability, Provider } from './types.ts';
 import { builtinCapabilities } from './registry.ts';
 
 export interface LoaderLogger {
@@ -16,10 +19,20 @@ export interface LoaderLogger {
   error?: (message: string) => void;
 }
 
+/** An active capability with the names of what it actually contributed. */
+export interface ResolvedCapability {
+  capability: Capability;
+  tools: string[];
+  agents: string[];
+  workflows: string[];
+}
+
 export interface CapabilityBundle {
-  /** Capabilities that are active for this run. */
+  /** Active capability objects. */
   active: Capability[];
-  /** Capabilities present but gated off, with the reason. */
+  /** Active capabilities with their resolved contribution names (for `caps`). */
+  resolved: ResolvedCapability[];
+  /** Capabilities present but gated off or failed, with the reason. */
   skipped: { capability: Capability; reason: string }[];
   /** Merged tools across all active capabilities. */
   tools: Record<string, unknown>;
@@ -29,10 +42,17 @@ export interface CapabilityBundle {
   workflows: Record<string, unknown>;
 }
 
-async function loadExternal(
-  packages: string[],
-  logger?: LoaderLogger,
-): Promise<Capability[]> {
+async function resolve<T>(
+  provider: Provider<T> | undefined,
+  config: MemclawConfig,
+): Promise<T | undefined> {
+  if (provider === undefined) return undefined;
+  return typeof provider === 'function'
+    ? await (provider as (c: MemclawConfig) => T | Promise<T>)(config)
+    : provider;
+}
+
+async function loadExternal(packages: string[], logger?: LoaderLogger): Promise<Capability[]> {
   const out: Capability[] = [];
   for (const pkg of packages) {
     try {
@@ -60,6 +80,7 @@ export async function loadCapabilities(
   ];
 
   const active: Capability[] = [];
+  const resolved: ResolvedCapability[] = [];
   const skipped: { capability: Capability; reason: string }[] = [];
   const tools: Record<string, unknown> = {};
   const agents: Record<string, unknown> = {};
@@ -79,11 +100,29 @@ export async function loadCapabilities(
       continue;
     }
 
-    active.push(cap);
-    Object.assign(tools, cap.tools ?? {});
-    Object.assign(agents, cap.agents ?? {});
-    Object.assign(workflows, cap.workflows ?? {});
+    try {
+      const capTools = (await resolve(cap.tools, config)) ?? {};
+      const capAgents = (await resolve(cap.agents, config)) ?? {};
+      const capWorkflows = (await resolve(cap.workflows, config)) ?? {};
+
+      Object.assign(tools, capTools);
+      Object.assign(agents, capAgents);
+      Object.assign(workflows, capWorkflows);
+
+      active.push(cap);
+      resolved.push({
+        capability: cap,
+        tools: Object.keys(capTools),
+        agents: Object.keys(capAgents),
+        workflows: Object.keys(capWorkflows),
+      });
+    } catch (err) {
+      skipped.push({
+        capability: cap,
+        reason: `failed to load: ${err instanceof Error ? err.message : String(err)}`,
+      });
+    }
   }
 
-  return { active, skipped, tools, agents, workflows };
+  return { active, resolved, skipped, tools, agents, workflows };
 }

@@ -125,6 +125,38 @@ memclaw will call `docs-expert` when a question matches its `description`. This 
 how you bring in Mastra **templates** (docs chatbot, chat-with-YT, feedback
 summary): lift the template's agent or workflow into a capability and register it.
 
+## Borrow tools from the whole ecosystem (MCP)
+
+The fastest way to give memclaw *a lot* of tools is the built-in **`mcp`**
+capability. Point it at any [Model Context Protocol](https://modelcontextprotocol.io)
+server and the agent gains all of that server's tools — no code.
+
+Create `memclaw.mcp.json` in the project root (copy `memclaw.mcp.json.example`):
+
+```json
+{
+  "servers": {
+    "filesystem": {
+      "command": "npx",
+      "args": ["-y", "@modelcontextprotocol/server-filesystem", "/path/you/allow"]
+    },
+    "github": {
+      "command": "npx",
+      "args": ["-y", "@modelcontextprotocol/server-github"],
+      "env": { "GITHUB_PERSONAL_ACCESS_TOKEN": "ghp_..." }
+    }
+  }
+}
+```
+
+Then `npm run caps` (you'll see e.g. `filesystem_read_file`, `filesystem_write_file`,
+…) and `npm run chat`. Tool names are namespaced `server_tool`, and every MCP tool
+call is traced in Studio. Stdio servers use `command`/`args`; remote servers use a
+`url`. The `mcp` capability activates automatically when the file exists.
+
+> Hundreds of MCP servers exist (GitHub, Slack, Postgres, Notion, Brave Search,
+> Puppeteer, and more). This is the single biggest lever for breadth.
+
 ## Ship it as an npm package (for the wider community)
 
 Capabilities don't have to live in this repo. Publish one and anyone can use it:

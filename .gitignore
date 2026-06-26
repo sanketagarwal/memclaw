@@ -5,6 +5,8 @@ node_modules/
 .env
 .env.local
 *.local
+# MCP config can contain tokens — keep the .example, ignore the real one
+memclaw.mcp.json
 
 # mastra build + local stores
 .mastra/
