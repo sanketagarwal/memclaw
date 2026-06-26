@@ -12,6 +12,7 @@ These ship with memclaw and load automatically (`npm run caps` to see status).
 | Time | `time` | `datetime` tool | — |
 | Web | `web` | `web-fetch` tool | — |
 | Weather | `weather` | `weather` tool | — |
+| Spreadsheet | `spreadsheet` | read/analyze local `.xlsx` & `.csv` (sheets, rows, column stats) | — |
 | Shell | `shell` | `shell` tool (approval-gated) | `MEMCLAW_ENABLE_SHELL=true` |
 
 ## Community

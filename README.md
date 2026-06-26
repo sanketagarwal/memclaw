@@ -116,8 +116,9 @@ so you can watch it navigate.
 
 ### 🧰 Capabilities (the extension system)
 Everything the agent can do is a **capability** — a self-contained bundle of tools,
-specialist sub-agents, and/or workflows. memclaw ships `time`, `web`, `weather`, and an
-opt-in `shell`; `npm run caps` shows what's active. Adding one is copying a folder; the
+specialist sub-agents, and/or workflows. memclaw ships `time`, `web`, `weather`,
+`spreadsheet` (analyze local Excel/CSV), and an opt-in `shell`; `npm run caps` shows
+what's active. Adding one is copying a folder; the
 agent code never changes. Publish a capability as an npm package and anyone can enable it
 with one env var. This is the path to OpenClaw-style breadth — and the main way to
 contribute. See [docs/capabilities.md](docs/capabilities.md) and the

@@ -12,11 +12,13 @@ import type { Capability } from './types.ts';
 import { timeCapability } from './time/index.ts';
 import { webCapability } from './web/index.ts';
 import { weatherCapability } from './weather/index.ts';
+import { spreadsheetCapability } from './spreadsheet/index.ts';
 import { shellCapability } from './shell/index.ts';
 
 export const builtinCapabilities: Capability[] = [
   timeCapability,
   webCapability,
   weatherCapability,
+  spreadsheetCapability,
   shellCapability,
 ];

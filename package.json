@@ -43,6 +43,7 @@
     "@mastra/memory": "^1.21.1",
     "@mastra/observability": "^1.15.1",
     "mastra": "^1.15.1",
+    "xlsx": "^0.18.5",
     "zod": "^4.4.3"
   },
   "devDependencies": {
