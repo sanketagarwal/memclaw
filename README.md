@@ -25,7 +25,8 @@ Mastra's batteries-included agent framework — and exposes all of it.
 - [Run every feature](#run-every-feature) ← **how to use each part**
   - [Chat](#1-chat-in-your-terminal) · [Memory](#2-memory-that-remembers-across-tasks) ·
     [Capabilities](#3-capabilities-give-the-agent-tools) · [MCP](#4-mcp--borrow-tools-from-the-whole-ecosystem) ·
-    [Browser](#5-browser-use) · [Channels](#6-connectors--channels) · [Observability](#7-observability--mastra-studio)
+    [Browser](#5-browser-use) · [Channels](#6-connectors--channels) · [Observability](#7-observability--mastra-studio) ·
+    [Workspace](#8-workspace--local-files--shell) · [24/7 proactive](#9-24--7-proactive-runs-scheduler)
 - [Configuration](#configuration)
 - [Commands](#commands)
 - [Architecture](#architecture)
@@ -131,8 +132,9 @@ specialist sub-agents, and/or workflows.
 npm run caps      # list active capabilities, their tools, and env status
 ```
 
-Built-in: `time`, `web`, `weather`, `spreadsheet` (analyze local Excel/CSV), `mcp`,
-and an opt-in `shell`. **Add your own** in four steps (full guide:
+Built-in: `time`, `web`, `weather`, `spreadsheet` (analyze local Excel/CSV), and `mcp`.
+(Local filesystem + shell is the **Workspace** feature — see [§8](#8-workspace--local-files--shell).)
+**Add your own** in four steps (full guide:
 [docs/capabilities.md](docs/capabilities.md)):
 
 ```bash
@@ -240,6 +242,45 @@ you point observability at durable storage and view it one of these ways:
 So the short answer: **locally, just `npm run dev`.** Deployed, pick a durable store + an
 exporter (hosted, OTel/Datadog, or self-hosted Studio) and your traces are there.
 
+### 8. Workspace — local files + shell
+
+Give the agent a real local environment (Mastra's **Workspace**): file tools
+(read/write/edit/list/grep) and a sandbox to run commands, rooted at a directory.
+
+```bash
+# in .env:
+MEMCLAW_WORKSPACE=true
+MEMCLAW_WORKSPACE_DIR=./workspace
+npm run chat     # "create notes.md in the workspace and write today's plan into it"
+```
+
+It's safer than a raw shell tool: **writes, deletes, and commands require approval**,
+and **writes require reading the file first** (with stale-file detection). Every call is
+traced in Studio. This is the recommended way to give memclaw the filesystem — for files
+on a *remote* host, use an MCP server instead (§4).
+
+### 9. 24 / 7 proactive runs (scheduler)
+
+memclaw can act on its own on a schedule — not just when messaged. This uses Mastra's
+**built-in scheduled workflows**: a cron-fired workflow runs the agent and publishes the
+result to the bus.
+
+```bash
+# in .env:
+MEMCLAW_SCHEDULE=true
+MEMCLAW_SCHEDULE_CRON=0 8 * * *          # 8am daily
+# MEMCLAW_SCHEDULE_PROMPT=Summarize my unread email and message me
+npm run start                            # run as a long-lived process (e.g. pm2/systemd)
+```
+
+The schedule appears in Studio's **Schedules** view (`/workflows/schedules`) with next
+fire time, run history, and **pause/resume** — no redeploy needed. Combined with running
+memclaw as a persistent daemon, this is genuine always-on, autonomous operation.
+
+> The built-in scheduler is a tick loop that needs a **long-lived host process** (your
+> server, Fly, Railway, ECS, a container). It won't fire on serverless — use
+> [`@mastra/inngest`](https://mastra.ai/docs/workflows/scheduled-workflows) there.
+
 ---
 
 ## Configuration
@@ -253,7 +294,10 @@ All configuration is via `.env` (start from [`.env.example`](.env.example)):
 | `MEMCLAW_MEMORY_MODEL` | `openai/gpt-5-mini` | Observer/Reflector model |
 | `MEMCLAW_PUBSUB` | `memory` | Bus backend: `memory` \| `unix` \| `redis` |
 | `MEMCLAW_BROWSER` | `false` | Enable the Playwright browser |
-| `MEMCLAW_ENABLE_SHELL` | `false` | Expose the shell tool (dangerous) |
+| `MEMCLAW_WORKSPACE` | `false` | Local filesystem + shell (approval-gated) |
+| `MEMCLAW_WORKSPACE_DIR` | `./workspace` | Workspace root directory |
+| `MEMCLAW_SCHEDULE` | `false` | Enable the proactive cron run |
+| `MEMCLAW_SCHEDULE_CRON` | `0 8 * * *` | Cron for the proactive run |
 | `MEMCLAW_CAPABILITIES` | — | Comma-separated external capability packages |
 | `MEMCLAW_MCP_CONFIG` | `memclaw.mcp.json` | Path to the MCP servers file |
 | `TELEGRAM_BOT_TOKEN` | — | Enable the Telegram channel |
@@ -303,8 +347,10 @@ tour: [docs/architecture.md](docs/architecture.md).
 
 - [ ] Self-authoring capabilities (agent writes its own tools)
 - [ ] More connectors: WhatsApp, Signal, iMessage, email, web widget
-- [ ] More built-in capabilities: files, GitHub, calendar, search (see [Wanted](CAPABILITIES.md#wanted))
-- [ ] Scheduled/proactive tasks via Mastra background tasks
+- [ ] More built-in capabilities: GitHub, calendar, search (see [Wanted](CAPABILITIES.md#wanted))
+- [x] Local filesystem + shell via Mastra Workspace
+- [x] Scheduled / proactive 24·7 runs via Mastra scheduled workflows
+- [ ] Deliver proactive results straight to a chosen connector (Telegram DM, etc.)
 - [ ] One-line installer (`npm create memclaw`)
 
 ## Contributing

@@ -90,7 +90,13 @@ async function runDoctor(): Promise<void> {
     console.log(`  ${DIM}· browser disabled (MEMCLAW_BROWSER=false)${RESET}`);
   }
 
-  config.enableShell ? warn('shell tool ENABLED (dangerous)') : console.log(`  ${DIM}· shell tool disabled${RESET}`);
+  config.workspace
+    ? ok('workspace', `${config.workspaceDir} (fs + sandbox, approval-gated)`)
+    : console.log(`  ${DIM}· workspace disabled (MEMCLAW_WORKSPACE=false)${RESET}`);
+
+  config.schedule
+    ? warn(`scheduler ENABLED — cron "${config.scheduleCron}" ${config.scheduleTimezone ?? '(host tz)'}`)
+    : console.log(`  ${DIM}· scheduler disabled (MEMCLAW_SCHEDULE=false)${RESET}`);
 
   const { enabled } = buildChannels();
   enabled.length

@@ -14,7 +14,10 @@ These ship with memclaw and load automatically (`npm run caps` to see status).
 | Weather | `weather` | `weather` tool | — |
 | Spreadsheet | `spreadsheet` | read/analyze local `.xlsx` & `.csv` (sheets, rows, column stats) | — |
 | MCP | `mcp` | tools from any external MCP server (GitHub, filesystem, Notion, …) | a `memclaw.mcp.json` file |
-| Shell | `shell` | `shell` tool (approval-gated) | `MEMCLAW_ENABLE_SHELL=true` |
+
+> **Local filesystem + shell** isn't a capability — it's Mastra's **Workspace**
+> feature, enabled with `MEMCLAW_WORKSPACE=true` (see the README). It gives the
+> agent approval-gated file and command tools with read-before-write safety.
 
 ## Community
 

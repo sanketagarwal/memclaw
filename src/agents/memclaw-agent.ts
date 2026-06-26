@@ -12,6 +12,7 @@ import { Memory } from '@mastra/memory';
 import type { MemclawConfig } from '../config.ts';
 import type { CapabilityBundle } from '../capabilities/index.ts';
 import { createBrowser } from '../browser/index.ts';
+import { createWorkspace } from '../workspace/index.ts';
 import { buildChannels } from '../connectors/channels.ts';
 
 const instructions = `You are memclaw, a capable, local-first personal assistant that actually gets things done.
@@ -22,7 +23,7 @@ Core behavior:
 - You have capabilities: tools you call directly, and specialist sub-agents and workflows you can delegate to. Prefer doing over describing. When a task matches a specialist (e.g. a docs expert, a data pipeline), delegate to it and synthesize the result.
 - Call 'datetime' whenever the current time matters.
 - If the browser tools are available, use them for anything that needs a real, JavaScript-rendered page, a login, or multi-step web interaction.
-- Some tools (like 'shell') require approval. When you need one, explain briefly what you intend to do and why before calling it.
+- If workspace tools are available, use them to read/write files and run commands. Read a file before editing it. Some actions (writing, deleting, running commands) require approval — explain briefly what you intend to do and why before calling them.
 - Never invent facts, file contents, or command output. If you don't know, find out with a tool or say so.
 
 Safety:
@@ -54,6 +55,8 @@ export function createMemclawAgent(bundle: CapabilityBundle, config: MemclawConf
     }),
     // `undefined` when MEMCLAW_BROWSER is off — the agent simply has no browser.
     browser: createBrowser(config),
+    // `undefined` when MEMCLAW_WORKSPACE is off — no filesystem/sandbox tools.
+    workspace: createWorkspace(config),
     // `undefined` when no channel credentials are configured.
     channels: channels as never,
   });

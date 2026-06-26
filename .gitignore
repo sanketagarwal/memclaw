@@ -23,6 +23,10 @@ mastra.db*
 # pubsub unix socket
 /tmp/mastra/
 
+# agent workspace (local files the agent creates at runtime)
+/workspace/
+/scratch-workspace/
+
 # logs / os
 *.log
 .DS_Store

@@ -11,6 +11,7 @@ import { createPubSub } from '../bus/pubsub.ts';
 import { BusMonitor } from '../bus/monitor.ts';
 import { loadCapabilities } from '../capabilities/index.ts';
 import { createMemclawAgent } from '../agents/memclaw-agent.ts';
+import { createCheckinWorkflow } from '../workflows/scheduled-checkin.ts';
 
 const logger = new PinoLogger({ name: 'memclaw', level: 'info' });
 
@@ -34,8 +35,21 @@ const pubsub = await createPubSub(config);
 // after the Mastra instance exists (the route closes over this binding).
 let busMonitor: BusMonitor | undefined;
 
+// Proactive scheduler: registered only when enabled, so nothing fires by
+// default. Mastra's built-in scheduler picks up the `schedule` on boot.
+const workflows = config.schedule
+  ? { proactiveCheckin: createCheckinWorkflow(config) }
+  : undefined;
+if (config.schedule) {
+  logger.info('[schedule] proactive run enabled', {
+    cron: config.scheduleCron,
+    timezone: config.scheduleTimezone ?? '(host)',
+  });
+}
+
 export const mastra = new Mastra({
   agents: { memclaw: memclawAgent },
+  workflows,
   pubsub,
   storage: new MastraCompositeStore({
     id: 'composite-storage',

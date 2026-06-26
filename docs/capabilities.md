@@ -91,7 +91,7 @@ export const myTool = createTool({
   inputSchema: z.object({ query: z.string().describe('What to do') }),
   outputSchema: z.object({ result: z.string() }),
   // For risky actions add `requireApproval: true` — on a channel it renders as
-  // an Approve/Deny card. See src/capabilities/shell/shell-tool.ts.
+  // an Approve/Deny card.
   execute: async ({ query }) => ({ result: `did: ${query}` }),
 });
 ```

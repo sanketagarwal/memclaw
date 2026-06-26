@@ -28,10 +28,20 @@ export interface MemclawConfig {
   browser: boolean;
   /** Run the browser headless (no visible window). */
   browserHeadless: boolean;
-  /** Expose a shell-exec tool to the agent (dangerous; off by default). */
-  enableShell: boolean;
+  /** Give the agent a local workspace (filesystem + sandbox/shell). */
+  workspace: boolean;
+  /** Directory the workspace is rooted at. */
+  workspaceDir: string;
   /** External capability packages to load, from MEMCLAW_CAPABILITIES. */
   capabilities: string[];
+  /** Enable the proactive scheduled run (cron). */
+  schedule: boolean;
+  /** Cron expression for the scheduled run. */
+  scheduleCron: string;
+  /** IANA timezone for the schedule (defaults to host). */
+  scheduleTimezone?: string;
+  /** Prompt the agent runs on each scheduled fire. */
+  schedulePrompt: string;
 }
 
 export function loadConfig(): MemclawConfig {
@@ -45,11 +55,18 @@ export function loadConfig(): MemclawConfig {
     redisUrl: process.env.REDIS_URL,
     browser: bool(process.env.MEMCLAW_BROWSER),
     browserHeadless: bool(process.env.MEMCLAW_BROWSER_HEADLESS, true),
-    enableShell: bool(process.env.MEMCLAW_ENABLE_SHELL),
+    workspace: bool(process.env.MEMCLAW_WORKSPACE),
+    workspaceDir: process.env.MEMCLAW_WORKSPACE_DIR ?? './workspace',
     capabilities: (process.env.MEMCLAW_CAPABILITIES ?? '')
       .split(',')
       .map((s) => s.trim())
       .filter(Boolean),
+    schedule: bool(process.env.MEMCLAW_SCHEDULE),
+    scheduleCron: process.env.MEMCLAW_SCHEDULE_CRON ?? '0 8 * * *',
+    scheduleTimezone: process.env.MEMCLAW_SCHEDULE_TIMEZONE,
+    schedulePrompt:
+      process.env.MEMCLAW_SCHEDULE_PROMPT ??
+      'Proactive check-in: based on what you remember about me and my goals, give me a brief, useful daily digest. If you have nothing useful to add, say so in one line.',
   };
 }
 

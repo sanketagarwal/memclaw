@@ -21,6 +21,8 @@ export const TOPICS = {
   runCompleted: 'memclaw.agent.run.completed',
   /** Lifecycle signal: an agent run threw. */
   runFailed: 'memclaw.agent.run.failed',
+  /** A proactive, scheduler-initiated run produced output. */
+  proactive: 'memclaw.agent.proactive',
 } as const;
 
 /** All memclaw topics, handy for the bus monitor to subscribe in a loop. */
