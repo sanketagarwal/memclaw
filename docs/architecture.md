@@ -56,8 +56,12 @@ responsive across reconnects.
   config (traces → storage → Studio, with secret redaction), the configured pub/sub
   bus, and a custom `GET /memclaw/bus` route. It also constructs and starts the
   **Bus Monitor** in whatever process imports it.
-- **`src/agents/memclaw-agent.ts`** — one agent with observational + working memory, the
-  tool registry, an optional browser, and any configured channels.
+- **`src/agents/memclaw-agent.ts`** — a factory that builds the agent from a loaded
+  capability bundle (its tools, sub-agents, and workflows), plus observational + working
+  memory, an optional browser, and any configured channels.
+- **`src/capabilities/`** — the extension system. `loadCapabilities()` merges built-in
+  and external capabilities into the bundle the agent is built from. See
+  [capabilities.md](capabilities.md).
 - **`src/runtime/dispatcher.ts`** — the bus loop: inbound → `agent.generate(...)` scoped
   to the message's memory thread → outbound + lifecycle events.
 - **`src/runtime/start.ts`** — wires the dispatcher and starts the given connectors,

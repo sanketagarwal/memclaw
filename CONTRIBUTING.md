@@ -18,11 +18,11 @@ npm run doctor      # sanity-check your environment
 ```
 src/
   config.ts            env-driven configuration
-  agents/              the memclaw agent (memory, tools, browser, channels)
+  agents/              the memclaw agent factory (memory, browser, channels)
+  capabilities/        the capability system (add abilities here)
   bus/                 topics, the pub/sub factory, and the bus monitor
   connectors/          the Connector interface + cli + platform channels
   runtime/             the dispatcher and runtime bootstrap
-  tools/               the tool registry (add capabilities here)
   browser/             the optional Playwright provider
   mastra/index.ts      the Mastra instance: storage, observability, server, bus
 scripts/setup.mjs      interactive first-run setup
@@ -30,7 +30,9 @@ scripts/setup.mjs      interactive first-run setup
 
 ## The two extension points
 
-- **Add a tool** → [docs/tools.md](docs/tools.md). One `createTool(...)`, register it.
+- **Add a capability** → [docs/capabilities.md](docs/capabilities.md). Copy
+  `src/capabilities/_template/`, write your tools / sub-agents / workflows, register it.
+  This is the main contribution path — also see the [catalog](CAPABILITIES.md).
 - **Add a connector** → [docs/connectors.md](docs/connectors.md). Implement `Connector`
   (publish inbound, subscribe outbound) or wire a Mastra channel adapter.
 
@@ -48,9 +50,10 @@ npm run doctor        # should look sane
 
 ## Good first issues
 
-- A new tool (calendar, files, search, GitHub).
+- A new capability (files, GitHub, calendar, search, Notion) — see the
+  [Wanted list](CAPABILITIES.md#wanted).
 - A new connector (web widget, email, WhatsApp).
 - A bus metrics dashboard route.
-- Tests around the dispatcher and bus monitor.
+- Tests around the dispatcher, capability loader, and bus monitor.
 
 By contributing you agree your work is licensed under the project's [MIT License](LICENSE).

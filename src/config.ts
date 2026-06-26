@@ -30,6 +30,8 @@ export interface MemclawConfig {
   browserHeadless: boolean;
   /** Expose a shell-exec tool to the agent (dangerous; off by default). */
   enableShell: boolean;
+  /** External capability packages to load, from MEMCLAW_CAPABILITIES. */
+  capabilities: string[];
 }
 
 export function loadConfig(): MemclawConfig {
@@ -44,6 +46,10 @@ export function loadConfig(): MemclawConfig {
     browser: bool(process.env.MEMCLAW_BROWSER),
     browserHeadless: bool(process.env.MEMCLAW_BROWSER_HEADLESS, true),
     enableShell: bool(process.env.MEMCLAW_ENABLE_SHELL),
+    capabilities: (process.env.MEMCLAW_CAPABILITIES ?? '')
+      .split(',')
+      .map((s) => s.trim())
+      .filter(Boolean),
   };
 }
 

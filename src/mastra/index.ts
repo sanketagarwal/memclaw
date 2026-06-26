@@ -9,9 +9,22 @@ import { Observability, MastraStorageExporter, SensitiveDataFilter } from '@mast
 import { config } from '../config.ts';
 import { createPubSub } from '../bus/pubsub.ts';
 import { BusMonitor } from '../bus/monitor.ts';
-import { memclawAgent } from '../agents/memclaw-agent.ts';
+import { loadCapabilities } from '../capabilities/index.ts';
+import { createMemclawAgent } from '../agents/memclaw-agent.ts';
 
 const logger = new PinoLogger({ name: 'memclaw', level: 'info' });
+
+// Load capabilities (built-in + any external packages) and build the agent from
+// what they contribute. This is the one place capabilities get assembled.
+export const capabilityBundle = await loadCapabilities(config, {
+  warn: (m) => logger.warn(m),
+  error: (m) => logger.error(m),
+});
+logger.info('[capabilities] active', {
+  active: capabilityBundle.active.map((c) => c.id),
+  tools: Object.keys(capabilityBundle.tools),
+});
+const memclawAgent = createMemclawAgent(capabilityBundle, config);
 
 // The event bus. Every connector, the dispatcher, the monitor, and Mastra's own
 // internal systems (workflows, agent streams, tasks) ride this one transport.

@@ -97,6 +97,43 @@ async function runDoctor(): Promise<void> {
     ? ok('channels', enabled.join(', '))
     : console.log(`  ${DIM}· no platform channels configured${RESET}`);
 
+  const { loadCapabilities } = await import('./capabilities/index.ts');
+  const bundle = await loadCapabilities(config);
+  ok('capabilities', `${bundle.active.length} active (${bundle.active.map((c) => c.id).join(', ')})`);
+
+  console.log('');
+}
+
+async function runCapabilities(): Promise<void> {
+  const { config } = await import('./config.ts');
+  const { loadCapabilities } = await import('./capabilities/index.ts');
+  const bundle = await loadCapabilities(config);
+
+  console.log(`\n${PINK}🐾 memclaw capabilities${RESET}\n`);
+
+  for (const cap of bundle.active) {
+    console.log(
+      `  ${GREEN}●${RESET} ${cap.name} ${DIM}(${cap.id}) v${cap.version ?? '0.0.0'}${RESET}`,
+    );
+    console.log(`    ${DIM}${cap.description}${RESET}`);
+    const tools = Object.keys(cap.tools ?? {});
+    const agents = Object.keys(cap.agents ?? {});
+    const workflows = Object.keys(cap.workflows ?? {});
+    if (tools.length) console.log(`    ${DIM}tools:${RESET} ${tools.join(', ')}`);
+    if (agents.length) console.log(`    ${DIM}agents:${RESET} ${agents.join(', ')}`);
+    if (workflows.length) console.log(`    ${DIM}workflows:${RESET} ${workflows.join(', ')}`);
+    for (const e of cap.env ?? []) {
+      const set = !!process.env[e.name];
+      const mark = set ? `${GREEN}✓${RESET}` : e.required ? `${RED}✗${RESET}` : `${YELLOW}·${RESET}`;
+      console.log(`    ${mark} ${e.name} ${DIM}— ${e.description}${RESET}`);
+    }
+  }
+
+  for (const s of bundle.skipped) {
+    console.log(
+      `  ${DIM}○ ${s.capability.name} (${s.capability.id}) — ${s.reason}${RESET}`,
+    );
+  }
   console.log('');
 }
 
@@ -125,6 +162,7 @@ ${DIM}Usage:${RESET} memclaw <command>   (or: npm run <command>)
   ${GREEN}chat${RESET}      Talk to memclaw in your terminal (zero config)
   ${GREEN}start${RESET}     Run the bus runtime (dispatcher + connectors + monitor)
   ${GREEN}dev${RESET}       Launch Mastra Studio — traces, memory, screencast, channels
+  ${GREEN}caps${RESET}      List active capabilities (tools, agents, workflows)
   ${GREEN}doctor${RESET}    Check your configuration
   ${GREEN}bus${RESET}       Print live event-bus metrics (needs the server running)
   ${GREEN}version${RESET}   Print the version
@@ -139,6 +177,10 @@ switch (command) {
     break;
   case 'start':
     await runStart();
+    break;
+  case 'caps':
+  case 'capabilities':
+    await runCapabilities();
     break;
   case 'doctor':
     await runDoctor();

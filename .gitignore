@@ -24,3 +24,6 @@ mastra.db*
 # logs / os
 *.log
 .DS_Store
+
+# local scratch files
+scratch-*

@@ -13,6 +13,7 @@
     "start": "tsx src/cli.ts start",
     "dev": "mastra dev",
     "build": "mastra build",
+    "caps": "tsx src/cli.ts caps",
     "doctor": "tsx src/cli.ts doctor",
     "typecheck": "tsc --noEmit"
   },

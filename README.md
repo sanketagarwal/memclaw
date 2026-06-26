@@ -51,7 +51,7 @@ and a distributed-capable event bus — are first-class and *visible*, not bolte
 | **Event bus** | **Built in and inspectable.** Pub/sub backbone with replay; scale from in-process → Unix socket → Redis/GCP by changing one env var | — |
 | **Browser** | Real Playwright browser with a **live screencast streamed into Studio** | Browser automation |
 | **Connectors** | Native Mastra **channels**: Telegram (no tunnel needed), Slack, Discord — add by dropping credentials in `.env` | WhatsApp, Telegram, Discord, Slack, Signal, iMessage |
-| **Extensibility** | One typed `createTool(...)` in a registry; one `Connector` interface | Self-writing skills |
+| **Extensibility** | A **capability system**: ship a folder (or npm package) of tools + sub-agents + workflows; auto-discovered and registered | Self-writing skills |
 | **Stack** | TypeScript, fully typed, hackable end-to-end | — |
 | **Model** | Provider-agnostic via Mastra model routing (`openai/…`, `anthropic/…`, …) | Hosted, subscription, or local models |
 | **Privacy** | Local-first; your keys, your machine, your data | Local-first |
@@ -114,9 +114,14 @@ Set `MEMCLAW_BROWSER=true`, run `npx playwright install chromium`, and the agent
 a real browser with accessibility-first targeting. Studio streams a **live screencast**
 so you can watch it navigate.
 
-### 🧰 Tools
-Ships with `web-fetch`, `datetime`, a `weather` example, and an opt-in, approval-gated
-`shell`. Adding one is a single file — see [docs/tools.md](docs/tools.md).
+### 🧰 Capabilities (the extension system)
+Everything the agent can do is a **capability** — a self-contained bundle of tools,
+specialist sub-agents, and/or workflows. memclaw ships `time`, `web`, `weather`, and an
+opt-in `shell`; `npm run caps` shows what's active. Adding one is copying a folder; the
+agent code never changes. Publish a capability as an npm package and anyone can enable it
+with one env var. This is the path to OpenClaw-style breadth — and the main way to
+contribute. See [docs/capabilities.md](docs/capabilities.md) and the
+[catalog](CAPABILITIES.md).
 
 ### 🔌 Connectors / channels
 The terminal works out of the box. Add a platform by putting its credentials in `.env`:
@@ -160,6 +165,7 @@ The same code runs on every backend — flip one env var:
 | `npm run chat` | Talk to memclaw in the terminal |
 | `npm run start` | Run the bus runtime (dispatcher + connectors + monitor) |
 | `npm run dev` | Launch Mastra Studio |
+| `npm run caps` | List active capabilities |
 | `npm run doctor` | Verify configuration |
 | `npm run build` | Production build (`mastra build`) |
 
