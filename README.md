@@ -4,8 +4,6 @@
 
 **An open-source, local-first personal AI agent built on the full [Mastra](https://mastra.ai) stack.**
 
-Observational memory · browser use · tool-calling · MCP · a pub/sub event bus you can *watch* · first-class observability in Mastra Studio.
-
 </div>
 
 ---
