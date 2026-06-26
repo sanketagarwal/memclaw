@@ -42,6 +42,8 @@ export interface MemclawConfig {
   scheduleTimezone?: string;
   /** Prompt the agent runs on each scheduled fire. */
   schedulePrompt: string;
+  /** Where to deliver scheduled output, e.g. "telegram:123456" (else bus-only). */
+  scheduleDeliverTo?: string;
 }
 
 export function loadConfig(): MemclawConfig {
@@ -67,6 +69,7 @@ export function loadConfig(): MemclawConfig {
     schedulePrompt:
       process.env.MEMCLAW_SCHEDULE_PROMPT ??
       'Proactive check-in: based on what you remember about me and my goals, give me a brief, useful daily digest. If you have nothing useful to add, say so in one line.',
+    scheduleDeliverTo: process.env.MEMCLAW_SCHEDULE_DELIVER_TO,
   };
 }
 

@@ -17,6 +17,7 @@ import { createWorkflow, createStep } from '@mastra/core/workflows';
 import { z } from 'zod';
 import type { MemclawConfig } from '../config.ts';
 import { TOPICS } from '../bus/topics.ts';
+import { parseDeliveryTarget, deliver } from '../connectors/deliver.ts';
 
 export function createCheckinWorkflow(config: MemclawConfig) {
   const run = createStep({
@@ -36,11 +37,20 @@ export function createCheckinWorkflow(config: MemclawConfig) {
       const latencyMs = Date.now() - startedAt;
       const runId = `proactive-${startedAt}`;
 
+      // Deliver to a chat surface if configured (else bus-only).
+      let delivered: string | undefined;
+      const target = parseDeliveryTarget(config.scheduleDeliverTo);
+      if (target) {
+        const r = await deliver(target, text);
+        delivered = r.ok ? `${target.kind} ✓` : `${target.kind} ✗ (${r.detail})`;
+        mastra.getLogger?.()?.info?.(`[schedule] delivery → ${delivered}`);
+      }
+
       // Observable: shows up in the bus monitor and Studio.
       await mastra.pubsub.publish(TOPICS.proactive, {
         type: 'agent.proactive',
         runId,
-        data: { text, source: 'scheduler', latencyMs },
+        data: { text, source: 'scheduler', latencyMs, delivered },
       });
       // Deliverable: any connector listening for outbound can forward it.
       await mastra.pubsub.publish(TOPICS.outbound, {

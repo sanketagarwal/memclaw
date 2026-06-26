@@ -94,9 +94,14 @@ async function runDoctor(): Promise<void> {
     ? ok('workspace', `${config.workspaceDir} (fs + sandbox, approval-gated)`)
     : console.log(`  ${DIM}· workspace disabled (MEMCLAW_WORKSPACE=false)${RESET}`);
 
-  config.schedule
-    ? warn(`scheduler ENABLED — cron "${config.scheduleCron}" ${config.scheduleTimezone ?? '(host tz)'}`)
-    : console.log(`  ${DIM}· scheduler disabled (MEMCLAW_SCHEDULE=false)${RESET}`);
+  if (config.schedule) {
+    warn(`scheduler ENABLED — cron "${config.scheduleCron}" ${config.scheduleTimezone ?? '(host tz)'}`);
+    console.log(
+      `    ${DIM}delivery: ${config.scheduleDeliverTo ?? 'bus-only (set MEMCLAW_SCHEDULE_DELIVER_TO)'}${RESET}`,
+    );
+  } else {
+    console.log(`  ${DIM}· scheduler disabled (MEMCLAW_SCHEDULE=false)${RESET}`);
+  }
 
   const { enabled } = buildChannels();
   enabled.length

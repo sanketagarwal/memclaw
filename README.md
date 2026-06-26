@@ -268,10 +268,18 @@ result to the bus.
 ```bash
 # in .env:
 MEMCLAW_SCHEDULE=true
-MEMCLAW_SCHEDULE_CRON=0 8 * * *          # 8am daily
+MEMCLAW_SCHEDULE_CRON=0 8 * * *                  # 8am daily
 # MEMCLAW_SCHEDULE_PROMPT=Summarize my unread email and message me
-npm run start                            # run as a long-lived process (e.g. pm2/systemd)
+# Deliver the result straight to a chat (else it stays bus-only):
+MEMCLAW_SCHEDULE_DELIVER_TO=telegram:123456789   # or slack:C0123ABCD
+npm run start                                    # run as a long-lived process (pm2/systemd)
 ```
+
+**Delivery** sends the run's output to a chat via that platform's send API, so a proactive
+digest actually arrives in your DMs. It needs the matching bot token (`TELEGRAM_BOT_TOKEN`
+/ `SLACK_BOT_TOKEN`). To find your Telegram chat id: message your bot, then open
+`https://api.telegram.org/bot<token>/getUpdates` and read `result[].message.chat.id`.
+Without `DELIVER_TO`, results stay on the bus (still observable in Studio).
 
 The schedule appears in Studio's **Schedules** view (`/workflows/schedules`) with next
 fire time, run history, and **pause/resume** — no redeploy needed. Combined with running
