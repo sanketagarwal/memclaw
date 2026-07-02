@@ -96,32 +96,32 @@ export const mastra = new Mastra({
         handler: async (c) =>
           c.json(busMonitor?.getStats() ?? { error: 'bus monitor not started yet' }),
       }),
-      // Inbound webhooks → agent signals. One route per source, e.g.
-      // POST /webhooks/github . Also mirrors every event onto the bus.
-      ...(webhookSignals
-        ? [
-            registerApiRoute('/webhooks/:source', {
-              method: 'POST',
-              handler: async (c) => {
-                const body = await c.req.json().catch(() => ({}));
-                const headers = Object.fromEntries(c.req.raw.headers);
-                const source = c.req.param('source');
-                const result = (await webhookSignals.handleWebhook({ body, headers })) as {
-                  status?: number;
-                  body?: { matched?: number };
-                };
-                const matched = result?.body?.matched ?? 0;
-                // Observable: every external event shows up on the bus + Studio.
-                await pubsub.publish(TOPICS.externalEvent, {
-                  type: 'event.external',
-                  runId: `wh-${source}`,
-                  data: { source, matched },
-                });
-                return c.json({ ok: true, matched }, (result?.status ?? 200) as never);
-              },
-            }),
-          ]
-        : []),
+      // Inbound webhooks → agent signals, e.g. POST /webhooks/github .
+      // Always registered; disabled unless MEMCLAW_WEBHOOKS is on. Mirrors
+      // every matched event onto the bus. (Kept as a plain array element —
+      // a conditional spread here breaks Mastra's route-manifest bundling.)
+      registerApiRoute('/webhooks/:source', {
+        method: 'POST',
+        handler: async (c) => {
+          if (!webhookSignals) {
+            return c.json({ ok: false, error: 'webhooks disabled (set MEMCLAW_WEBHOOKS=true)' }, 404);
+          }
+          const body = await c.req.json().catch(() => ({}));
+          const headers = Object.fromEntries(c.req.raw.headers);
+          const source = c.req.param('source');
+          const result = (await webhookSignals.handleWebhook({ body, headers })) as {
+            body?: { matched?: number };
+          };
+          const matched = result?.body?.matched ?? 0;
+          // Observable: every external event shows up on the bus + Studio.
+          await pubsub.publish(TOPICS.externalEvent, {
+            type: 'event.external',
+            runId: `wh-${source}`,
+            data: { source, matched },
+          });
+          return c.json({ ok: true, matched });
+        },
+      }),
     ],
   },
 });
