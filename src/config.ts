@@ -44,6 +44,8 @@ export interface MemclawConfig {
   schedulePrompt: string;
   /** Where to deliver scheduled output, e.g. "telegram:123456" (else bus-only). */
   scheduleDeliverTo?: string;
+  /** Accept inbound webhooks as agent signals (external events). */
+  webhooks: boolean;
 }
 
 export function loadConfig(): MemclawConfig {
@@ -70,6 +72,7 @@ export function loadConfig(): MemclawConfig {
       process.env.MEMCLAW_SCHEDULE_PROMPT ??
       'Proactive check-in: based on what you remember about me and my goals, give me a brief, useful daily digest. If you have nothing useful to add, say so in one line.',
     scheduleDeliverTo: process.env.MEMCLAW_SCHEDULE_DELIVER_TO,
+    webhooks: bool(process.env.MEMCLAW_WEBHOOKS),
   };
 }
 

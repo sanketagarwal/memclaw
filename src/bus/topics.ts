@@ -23,6 +23,8 @@ export const TOPICS = {
   runFailed: 'memclaw.agent.run.failed',
   /** A proactive, scheduler-initiated run produced output. */
   proactive: 'memclaw.agent.proactive',
+  /** An inbound webhook from an external system arrived (signal). */
+  externalEvent: 'memclaw.event.external',
 } as const;
 
 /** All memclaw topics, handy for the bus monitor to subscribe in a loop. */

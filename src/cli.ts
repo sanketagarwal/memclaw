@@ -103,6 +103,10 @@ async function runDoctor(): Promise<void> {
     console.log(`  ${DIM}· scheduler disabled (MEMCLAW_SCHEDULE=false)${RESET}`);
   }
 
+  config.webhooks
+    ? ok('webhooks', 'inbound signals ON (POST /webhooks/:source)')
+    : console.log(`  ${DIM}· webhooks disabled (MEMCLAW_WEBHOOKS=false)${RESET}`);
+
   const { enabled } = buildChannels();
   enabled.length
     ? ok('channels', enabled.join(', '))

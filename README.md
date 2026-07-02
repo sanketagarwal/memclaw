@@ -26,7 +26,8 @@ Mastra's batteries-included agent framework — and exposes all of it.
   - [Chat](#1-chat-in-your-terminal) · [Memory](#2-memory-that-remembers-across-tasks) ·
     [Capabilities](#3-capabilities-give-the-agent-tools) · [MCP](#4-mcp--borrow-tools-from-the-whole-ecosystem) ·
     [Browser](#5-browser-use) · [Channels](#6-connectors--channels) · [Observability](#7-observability--mastra-studio) ·
-    [Workspace](#8-workspace--local-files--shell) · [24/7 proactive](#9-24--7-proactive-runs-scheduler)
+    [Workspace](#8-workspace--local-files--shell) · [24/7 proactive](#9-24--7-proactive-runs-scheduler) ·
+    [Inbound events](#10-inbound-external-events-webhooks)
 - [Configuration](#configuration)
 - [Commands](#commands)
 - [Architecture](#architecture)
@@ -289,6 +290,25 @@ memclaw as a persistent daemon, this is genuine always-on, autonomous operation.
 > server, Fly, Railway, ECS, a container). It won't fire on serverless — use
 > [`@mastra/inngest`](https://mastra.ai/docs/workflows/scheduled-workflows) there.
 
+### 10. Inbound external events (webhooks)
+
+The inbound counterpart to the bus: external systems (GitHub, Stripe, a CRM, sensors…)
+POST a webhook and it becomes a **notification signal** injected into a subscribed
+conversation — via Mastra's `WebhookSignalProvider`. A single thread can hold your
+messages *and* events from multiple sources, with no restart and no lost prompt cache.
+
+```bash
+# .env
+MEMCLAW_WEBHOOKS=true
+npm run dev                                   # mounts POST /webhooks/:source
+npx cloudflared tunnel --url http://localhost:4111   # public URL for real providers
+```
+
+Every event is also mirrored onto the bus (`memclaw.event.external`), so it's visible in
+the monitor and Studio even before any subscription. To route a source's events into a
+specific conversation, subscribe that thread to the resource — see
+[docs/webhooks.md](docs/webhooks.md). (Verified end-to-end: subscribe → webhook → matched.)
+
 ---
 
 ## Configuration
@@ -306,6 +326,7 @@ All configuration is via `.env` (start from [`.env.example`](.env.example)):
 | `MEMCLAW_WORKSPACE_DIR` | `./workspace` | Workspace root directory |
 | `MEMCLAW_SCHEDULE` | `false` | Enable the proactive cron run |
 | `MEMCLAW_SCHEDULE_CRON` | `0 8 * * *` | Cron for the proactive run |
+| `MEMCLAW_WEBHOOKS` | `false` | Accept inbound webhooks as agent signals |
 | `MEMCLAW_CAPABILITIES` | — | Comma-separated external capability packages |
 | `MEMCLAW_MCP_CONFIG` | `memclaw.mcp.json` | Path to the MCP servers file |
 | `TELEGRAM_BOT_TOKEN` | — | Enable the Telegram channel |
@@ -358,6 +379,8 @@ tour: [docs/architecture.md](docs/architecture.md).
 - [ ] More built-in capabilities: GitHub, calendar, search (see [Wanted](CAPABILITIES.md#wanted))
 - [x] Local filesystem + shell via Mastra Workspace
 - [x] Scheduled / proactive 24·7 runs via Mastra scheduled workflows
+- [x] Inbound external events via Mastra webhook signals
+- [ ] Expose webhook subscribe/unsubscribe as agent tools ("watch acme/repo in this chat")
 - [ ] Deliver proactive results straight to a chosen connector (Telegram DM, etc.)
 - [ ] One-line installer (`npm create memclaw`)
 

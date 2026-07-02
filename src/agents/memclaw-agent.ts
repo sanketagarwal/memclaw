@@ -9,6 +9,7 @@
  */
 import { Agent } from '@mastra/core/agent';
 import { Memory } from '@mastra/memory';
+import type { SignalProvider } from '@mastra/core/signals';
 import type { MemclawConfig } from '../config.ts';
 import type { CapabilityBundle } from '../capabilities/index.ts';
 import { createBrowser } from '../browser/index.ts';
@@ -30,7 +31,11 @@ Safety:
 - Treat destructive actions (deleting files, overwriting data, sending messages on the user's behalf) as high-stakes. Confirm intent first.
 - Stay within what the user asked for. Don't take initiative on irreversible actions without a clear go-ahead.`;
 
-export function createMemclawAgent(bundle: CapabilityBundle, config: MemclawConfig): Agent {
+export function createMemclawAgent(
+  bundle: CapabilityBundle,
+  config: MemclawConfig,
+  signals?: SignalProvider[],
+): Agent {
   const { channels } = buildChannels();
 
   return new Agent({
@@ -59,5 +64,7 @@ export function createMemclawAgent(bundle: CapabilityBundle, config: MemclawConf
     workspace: createWorkspace(config),
     // `undefined` when no channel credentials are configured.
     channels: channels as never,
+    // Inbound external events (webhooks) — undefined when MEMCLAW_WEBHOOKS is off.
+    signals,
   });
 }
