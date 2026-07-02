@@ -36,6 +36,16 @@ async function main() {
     ? await readFile('.env', 'utf8')
     : await readFile('.env.example', 'utf8');
 
+  // Key passed as an argument: `npm run setup sk-...` — set it and stop.
+  // Works even when .env exists and stdin isn't a TTY.
+  const argKey = process.argv[2]?.trim();
+  if (argKey && argKey.startsWith('sk-')) {
+    env = setEnv(env, 'OPENAI_API_KEY', argKey);
+    await writeFile('.env', env);
+    console.log(`${GREEN}✓${RESET} Saved OPENAI_API_KEY to .env. Restart the server to pick it up.`);
+    return;
+  }
+
   // Non-interactive (CI, piped): just materialize .env and stop.
   if (!stdin.isTTY) {
     if (!(await exists('.env'))) {
