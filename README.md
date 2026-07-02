@@ -4,7 +4,7 @@
 
 **An open-source, local-first personal AI agent built on the full [Mastra](https://mastra.ai) stack.**
 
-*Status: v0.1 — a working foundation. Memory, tools, MCP, browser, workspace, connectors, a proactive scheduler, inbound webhooks, and full Studio observability are all wired and verified.*
+*Status: v0.1 — a working foundation. Memory, tools, MCP, browser, workspace, connectors, a proactive scheduler, inbound webhooks, multi-agent teams, and full Studio observability are all wired and verified.*
 
 </div>
 
@@ -29,7 +29,7 @@ Mastra's batteries-included agent framework — and exposes all of it.
     [Capabilities](#3-capabilities-give-the-agent-tools) · [MCP](#4-mcp--borrow-tools-from-the-whole-ecosystem) ·
     [Browser](#5-browser-use) · [Channels](#6-connectors--channels) · [Observability](#7-observability--mastra-studio) ·
     [Workspace](#8-workspace--local-files--shell) · [24/7 proactive](#9-24--7-proactive-runs-scheduler) ·
-    [Inbound events](#10-inbound-external-events-webhooks)
+    [Inbound events](#10-inbound-external-events-webhooks) · [Multi-agent teams](#11-multi-agent-teams)
 - [Configuration](#configuration)
 - [Commands](#commands)
 - [Architecture](#architecture)
@@ -313,6 +313,39 @@ arrive here as notifications. Every event is also mirrored onto the bus
 subscription. See [docs/webhooks.md](docs/webhooks.md). (Verified end-to-end: watch →
 webhook → `matched:1` → unwatch → `matched:0`.)
 
+### 11. Multi-agent teams
+
+Build an **orchestrator** that manages and delegates to multiple **specialist**
+agents — Mastra's supervisor pattern, with a team-shaped memory model:
+
+- the **orchestrator holds shared team memory** (accumulates the whole coordination)
+- each **specialist has its own individual memory** (isolated; fresh thread per delegation)
+
+Two helpers (`src/team`) make it a few lines — see [docs/multi-agent.md](docs/multi-agent.md):
+
+```typescript
+const researcher = defineSpecialist({ id: 'researcher', description: '…', instructions: '…', tools: { webFetch } });
+const writer     = defineSpecialist({ id: 'writer', description: '…', instructions: '…' });
+
+export const researchTeam = defineOrchestrator({
+  id: 'research-team',
+  instructions: 'Delegate fact-finding to researcher, then writing to writer; synthesize.',
+  agents: { researcher, writer },      // ← the specialists it manages
+});
+```
+
+memclaw ships a working example — enable it and it registers alongside `memclaw`:
+
+```bash
+# .env
+MEMCLAW_TEAM=true
+npm run dev      # "research-team" appears in Studio; watch it delegate in the trace tree
+```
+
+(Verified: with `MEMCLAW_TEAM=true`, `mastra dev` boots and registers both `memclaw`
+and `research-team`.) Delegation is hub-and-spoke; for peer-to-peer/cross-service
+agents, Mastra has a separate A2A protocol.
+
 ---
 
 ## Configuration
@@ -331,6 +364,7 @@ All configuration is via `.env` (start from [`.env.example`](.env.example)):
 | `MEMCLAW_SCHEDULE` | `false` | Enable the proactive cron run |
 | `MEMCLAW_SCHEDULE_CRON` | `0 8 * * *` | Cron for the proactive run |
 | `MEMCLAW_WEBHOOKS` | `false` | Accept inbound webhooks as agent signals |
+| `MEMCLAW_TEAM` | `false` | Register the example multi-agent research team |
 | `MEMCLAW_CAPABILITIES` | — | Comma-separated external capability packages |
 | `MEMCLAW_MCP_CONFIG` | `memclaw.mcp.json` | Path to the MCP servers file |
 | `TELEGRAM_BOT_TOKEN` | — | Enable the Telegram channel |
@@ -385,6 +419,8 @@ tour: [docs/architecture.md](docs/architecture.md).
 - [x] Scheduled / proactive 24·7 runs via Mastra scheduled workflows
 - [x] Inbound external events via Mastra webhook signals
 - [x] Conversational webhook subscribe/unsubscribe ("watch acme/repo in this chat")
+- [x] Multi-agent teams — orchestrator + specialists, shared vs individual memory
+- [ ] Self-authoring skills (agent writes its own capabilities)
 - [ ] Deliver proactive results straight to a chosen connector (Telegram DM, etc.)
 - [ ] One-line installer (`npm create memclaw`)
 

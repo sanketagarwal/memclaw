@@ -46,6 +46,8 @@ export interface MemclawConfig {
   scheduleDeliverTo?: string;
   /** Accept inbound webhooks as agent signals (external events). */
   webhooks: boolean;
+  /** Register the example multi-agent research team orchestrator. */
+  team: boolean;
 }
 
 export function loadConfig(): MemclawConfig {
@@ -73,6 +75,7 @@ export function loadConfig(): MemclawConfig {
       'Proactive check-in: based on what you remember about me and my goals, give me a brief, useful daily digest. If you have nothing useful to add, say so in one line.',
     scheduleDeliverTo: process.env.MEMCLAW_SCHEDULE_DELIVER_TO,
     webhooks: bool(process.env.MEMCLAW_WEBHOOKS),
+    team: bool(process.env.MEMCLAW_TEAM),
   };
 }
 

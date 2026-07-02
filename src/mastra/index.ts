@@ -1,4 +1,5 @@
 import { Mastra } from '@mastra/core/mastra';
+import type { Agent } from '@mastra/core/agent';
 import { registerApiRoute } from '@mastra/core/server';
 import { PinoLogger } from '@mastra/loggers';
 import { LibSQLStore } from '@mastra/libsql';
@@ -14,6 +15,7 @@ import { loadCapabilities } from '../capabilities/index.ts';
 import { createMemclawAgent } from '../agents/memclaw-agent.ts';
 import { createCheckinWorkflow } from '../workflows/scheduled-checkin.ts';
 import { createWebhookSignals } from '../signals/webhooks.ts';
+import { createResearchTeam } from '../team/index.ts';
 
 const logger = new PinoLogger({ name: 'memclaw', level: 'info' });
 
@@ -37,6 +39,15 @@ const memclawAgent = createMemclawAgent(
 );
 if (webhookSignals) logger.info('[webhooks] inbound event signals enabled');
 
+// Multi-agent: register the example orchestrator + its specialists when enabled.
+// Built as a plain object (no inline conditional spread — that breaks bundling).
+const agents: Record<string, Agent> = { memclaw: memclawAgent };
+const researchTeam = createResearchTeam(config);
+if (researchTeam) {
+  agents.researchTeam = researchTeam;
+  logger.info('[team] research-team orchestrator registered (manages researcher + writer)');
+}
+
 // The event bus. Every connector, the dispatcher, the monitor, and Mastra's own
 // internal systems (workflows, agent streams, tasks) ride this one transport.
 const pubsub = await createPubSub(config);
@@ -58,7 +69,7 @@ if (config.schedule) {
 }
 
 export const mastra = new Mastra({
-  agents: { memclaw: memclawAgent },
+  agents,
   workflows,
   pubsub,
   storage: new MastraCompositeStore({
