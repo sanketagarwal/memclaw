@@ -2,28 +2,33 @@
 
 # 🐾 memclaw
 
-**An open-source, local-first personal AI agent built on the full [Mastra](https://mastra.ai) stack.**
+**Run a team of AI agents — an orchestrator that delegates to specialists, each with its own memory — fully observable. Open-source, local-first, built on the full [Mastra](https://mastra.ai) stack.**
 
-*Status: v0.1 — a working foundation. Memory, tools, MCP, browser, workspace, connectors, a proactive scheduler, inbound webhooks, multi-agent teams, and full Studio observability are all wired and verified.*
+*Status: v0.1 — a working foundation. Headline: **multi-agent teams with per-agent Observational Memory and full Studio observability**. Plus tools, MCP, browser, workspace, connectors, a proactive scheduler, and inbound webhooks — all wired and verified.*
 
 </div>
 
 ---
 
-memclaw is a personal AI assistant that runs on your machine, remembers you across
-conversations, can browse the web and run real tools, and talks to you wherever you
-are — your terminal today, Telegram/Slack/Discord with one line of config. Every
-message flows over an **event bus**, and every action is **traced in Mastra Studio**,
-so the whole system is observable instead of a black box.
+**memclaw lets you run multiple AI agents that work as a team and remember.** An
+**orchestrator** agent coordinates **specialist** agents: the orchestrator keeps the
+**shared team memory** while each specialist keeps its **own private memory** — and
+**every step is observable** live in Mastra Studio (who got delegated what, which tools
+ran, how long each took, and the memory forming in real time).
 
-It's inspired by [OpenClaw](https://openclaw.ai/), but takes a different bet: instead
-of hand-rolling memory, browser control, integrations, and eventing, memclaw stands on
-Mastra's batteries-included agent framework — and exposes all of it.
+It runs on your machine, talks to you in the terminal or on Telegram/Slack/Discord, can
+browse the web and use real tools, and acts on a schedule or on external events. Think of
+it as a personal-assistant *distribution* of the [Mastra](https://mastra.ai) framework —
+inspired by [OpenClaw](https://openclaw.ai/) and [Hermes](https://www.turingpost.com/p/hermes),
+betting on one thing they don't emphasize: **a team of agents you can actually watch think.**
 
 ## Table of contents
 
 - [Quick start](#quick-start)
-- [Why memclaw?](#why-memclaw)
+- [⭐ The core idea: multi-agent teams](#-the-core-idea-multi-agent-teams)
+- [Build your own multi-agent system](#build-your-own-multi-agent-system)
+- [Use cases](#use-cases)
+- [How it compares — memclaw vs OpenClaw vs Hermes](#how-it-compares--memclaw-vs-openclaw-vs-hermes)
 - [Run every feature](#run-every-feature) ← **how to use each part**
   - [Chat](#1-chat-in-your-terminal) · [Memory](#2-memory-that-remembers-across-tasks) ·
     [Capabilities](#3-capabilities-give-the-agent-tools) · [MCP](#4-mcp--borrow-tools-from-the-whole-ecosystem) ·
@@ -53,27 +58,114 @@ Then, to see everything under the hood:
 npm run dev       # opens Mastra Studio: traces, memory, metrics, screencast
 ```
 
-## Why memclaw?
+## ⭐ The core idea: multi-agent teams
 
-memclaw's bet is **architecture over accretion**. Because it's built on Mastra, the
-hard parts — long-term memory, browser automation, integrations, tracing, and a
-distributed-capable event bus — are first-class and *visible*, not bolted on.
+memclaw's headline feature: **build a team of AI agents that work together and remember.**
 
-| | 🐾 **memclaw** | OpenClaw |
+- An **orchestrator** agent takes a request and **delegates** to specialist agents, then synthesizes their results.
+- The **orchestrator holds the shared team memory** — it accumulates the whole job and, across sessions, your ongoing context.
+- **Each specialist keeps its own private memory** — Mastra isolates it (a fresh thread per delegation), so specialists stay focused and never pollute one another.
+- **The whole thing is observable** — open Mastra Studio and watch the delegation unfold in the trace tree: the orchestrator calling each specialist, every tool call and timing, and each agent's Observational Memory forming live.
+
+It's built on Mastra's supervisor pattern + Observational Memory + Studio, assembled so you can stand up an *observable* agent team in a few lines.
+
+```bash
+MEMCLAW_TEAM=true npm run dev    # registers the example "research-team" → http://localhost:4111
+```
+
+## Build your own multi-agent system
+
+Four steps (full guide: [docs/multi-agent.md](docs/multi-agent.md)).
+
+**1 — Define your specialists.** Each is a focused agent with a `description` (so the orchestrator knows when to use it), instructions, tools, and its own memory:
+
+```typescript
+import { defineSpecialist } from './src/team';
+import { webFetchTool } from './src/capabilities/web/web-fetch-tool.ts';
+
+const researcher = defineSpecialist({
+  id: 'researcher',
+  description: 'Gathers facts from the web and returns sourced bullet points.',
+  instructions: 'Research topics with web-fetch. Never invent facts.',
+  tools: { webFetch: webFetchTool },
+});
+
+const writer = defineSpecialist({
+  id: 'writer',
+  description: 'Turns research notes into a clear written answer.',
+  instructions: 'Write clear prose from the given notes. Add nothing new.',
+});
+```
+
+**2 — Define the orchestrator.** It manages the specialists and holds the shared memory:
+
+```typescript
+import { defineOrchestrator } from './src/team';
+
+export const researchTeam = defineOrchestrator({
+  id: 'research-team',
+  instructions: 'Delegate fact-finding to researcher, then writing to writer; synthesize.',
+  agents: { researcher, writer },      // ← the specialists it manages
+});
+```
+
+**3 — Register it** in `src/mastra/index.ts`:
+
+```typescript
+const agents = { memclaw: memclawAgent, researchTeam };
+export const mastra = new Mastra({ agents, /* ... */ });
+```
+
+**4 — Run + watch it.** Call the orchestrator; it delegates automatically, and you watch every hop in Studio:
+
+```typescript
+const team = mastra.getAgent('research-team');
+await team.generate('Research X and write a short brief.', { memory: { thread: 't1', resource: 'me' } });
+```
+
+**Memory model at a glance:**
+
+| | scope | holds |
 | --- | --- | --- |
-| **Memory** | [Observational Memory](https://mastra.ai/docs/memory/observational-memory): background Observer + Reflector agents compress history into a dense log, plus structured working memory | Persistent memory |
-| **Observability** | **First-class.** Every run, tool call, and bus event is traced/metered. Watch it live in Mastra Studio | Logs |
-| **Tools** | A **capability system** (ship a folder or npm package) **+ MCP** (any of hundreds of MCP servers, config-only) | Skills + integrations |
-| **Event bus** | **Built in and inspectable.** Pub/sub with replay; scale in-process → Unix socket → Redis by changing one env var | — |
-| **Browser** | Real Playwright browser with a **live screencast in Studio** | Browser automation |
-| **Connectors** | Native Mastra channels: Telegram (no tunnel), Slack, Discord — add by dropping credentials in `.env` | WhatsApp, Telegram, Discord, Slack, Signal, iMessage |
-| **Stack** | TypeScript, fully typed, hackable end-to-end | — |
-| **Model** | Provider-agnostic via Mastra routing (`openai/…`, `anthropic/…`) | Hosted/subscription/local |
+| **Orchestrator** | shared (resource — across sessions) | the whole job + your ongoing context |
+| **Each specialist** | individual (fresh per delegation) | just its own task input/output |
 
-**Where OpenClaw is still ahead (honest version):** breadth of integrations (50+,
-incl. WhatsApp/Signal/iMessage), self-writing skills, and years of maturity. memclaw's
-wager is that a transparent, observable, event-driven foundation — plus MCP — is the
-faster path to *catching and passing* that.
+## Use cases
+
+What you can build by combining a team with the right tools and surfaces — all **observable end-to-end** in Studio:
+
+- **Research team** — orchestrator → researcher (web/browser) + writer. *(multi-agent + browser)*
+- **Personal chief-of-staff** — remembers your goals, DMs you a morning digest. *(memory + scheduler + Telegram)*
+- **Inbox triage** — reads mail, drafts replies from what it knows about each client, you approve. *(MCP/email + memory + approval)*
+- **Repo watchdog** — *"watch acme/repo"*; on a new issue a specialist reads your docs and drafts a reply. *(webhooks + workspace + delegation)*
+- **Ops monitor** — reacts to alert webhooks, investigates, pings you. *(webhooks + proactive + delivery)*
+- **Customer-support agent** — answers in Slack from your knowledge base. *(channels + docs specialist)*
+- **Content pipeline** — researcher → writer → editor, each with its own memory. *(multi-agent)*
+- **Data analyst** — reads a spreadsheet, a researcher adds context, a writer reports. *(spreadsheet + team)*
+- **Dev helper** — reads/edits files and runs commands (approval-gated); a reviewer specialist checks the diff. *(workspace + team)*
+
+Adding a new tool (capability or MCP) or a new specialist never touches the core.
+
+## How it compares — memclaw vs OpenClaw vs Hermes
+
+All three are self-hosted, persistent personal-agent projects. Honestly:
+
+| | 🐾 **memclaw** | OpenClaw | Hermes |
+| --- | --- | --- | --- |
+| **Maturity** | v0.1 foundation | mature, large community | ~110k★ in 10 weeks, fast-growing |
+| **Core bet** | observable multi-agent teams on Mastra | control-plane gateway + human-authored skills | self-improving single-agent loop |
+| **Multi-agent** | ✅ orchestrator + specialists, per-agent memory | limited | primarily one self-improving agent |
+| **Memory** | Observational Memory (Observer/Reflector); shared vs individual | persistent memory | self-curated memory |
+| **Observability** | ✅ first-class — live traces, metrics, memory view, inspectable bus | logs | logs |
+| **Extending** | capabilities (folder/npm) **+ MCP** (hundreds, config-only) | skills + 50+ integrations | self-authoring skills |
+| **Self-authoring skills** | ❌ (roadmap) | partial | ✅ signature feature |
+| **Connectors** | terminal, Telegram/Slack/Discord | WhatsApp/Telegram/Discord/Slack/Signal/iMessage (50+) | many messaging apps |
+| **Stack** | TypeScript on Mastra, fully hackable | — | — |
+| **Best for** | an observable agent *team* you own & extend | broad ready-made automation *today* | autonomous long-horizon knowledge work |
+
+**The honest take:** OpenClaw and Hermes are mature, with large ecosystems — and Hermes has self-authoring skills memclaw doesn't (yet). memclaw's distinct edge is **observable multi-agent teams with a clean shared-vs-individual memory split**, standing on a maintained framework (Mastra) rather than a single project's runtime. Choose memclaw when you want to **build and *watch*** your own agent team; choose the others for breadth and maturity right now.
+
+*Sources: [The New Stack](https://thenewstack.io/persistent-ai-agents-compared/) · [Turing Post](https://www.turingpost.com/p/hermes) · [MindStudio](https://www.mindstudio.ai/blog/hermes-agent-vs-openclaw-comparison).*
 
 ---
 
@@ -315,36 +407,17 @@ webhook → `matched:1` → unwatch → `matched:0`.)
 
 ### 11. Multi-agent teams
 
-Build an **orchestrator** that manages and delegates to multiple **specialist**
-agents — Mastra's supervisor pattern, with a team-shaped memory model:
-
-- the **orchestrator holds shared team memory** (accumulates the whole coordination)
-- each **specialist has its own individual memory** (isolated; fresh thread per delegation)
-
-Two helpers (`src/team`) make it a few lines — see [docs/multi-agent.md](docs/multi-agent.md):
-
-```typescript
-const researcher = defineSpecialist({ id: 'researcher', description: '…', instructions: '…', tools: { webFetch } });
-const writer     = defineSpecialist({ id: 'writer', description: '…', instructions: '…' });
-
-export const researchTeam = defineOrchestrator({
-  id: 'research-team',
-  instructions: 'Delegate fact-finding to researcher, then writing to writer; synthesize.',
-  agents: { researcher, writer },      // ← the specialists it manages
-});
-```
-
-memclaw ships a working example — enable it and it registers alongside `memclaw`:
+memclaw's headline feature — covered in full above:
+[⭐ The core idea](#-the-core-idea-multi-agent-teams) and
+[Build your own multi-agent system](#build-your-own-multi-agent-system). Quick enable:
 
 ```bash
-# .env
-MEMCLAW_TEAM=true
-npm run dev      # "research-team" appears in Studio; watch it delegate in the trace tree
+MEMCLAW_TEAM=true npm run dev    # registers the example "research-team"
 ```
 
-(Verified: with `MEMCLAW_TEAM=true`, `mastra dev` boots and registers both `memclaw`
-and `research-team`.) Delegation is hub-and-spoke; for peer-to-peer/cross-service
-agents, Mastra has a separate A2A protocol.
+(Verified: `mastra dev` boots and registers both `memclaw` and `research-team`.)
+Delegation is hub-and-spoke; for peer-to-peer/cross-service agents, Mastra has a
+separate A2A protocol.
 
 ---
 
