@@ -304,10 +304,12 @@ npm run dev                                   # mounts POST /webhooks/:source
 npx cloudflared tunnel --url http://localhost:4111   # public URL for real providers
 ```
 
-Every event is also mirrored onto the bus (`memclaw.event.external`), so it's visible in
-the monitor and Studio even before any subscription. To route a source's events into a
-specific conversation, subscribe that thread to the resource — see
-[docs/webhooks.md](docs/webhooks.md). (Verified end-to-end: subscribe → webhook → matched.)
+Binding a conversation is **conversational** — the agent has `watch-source` /
+`unwatch-source` tools, so you just say *"watch acme/repo in this chat"* and its events
+arrive here as notifications. Every event is also mirrored onto the bus
+(`memclaw.event.external`), so it's visible in the monitor and Studio even before any
+subscription. See [docs/webhooks.md](docs/webhooks.md). (Verified end-to-end: watch →
+webhook → `matched:1` → unwatch → `matched:0`.)
 
 ---
 
@@ -380,7 +382,7 @@ tour: [docs/architecture.md](docs/architecture.md).
 - [x] Local filesystem + shell via Mastra Workspace
 - [x] Scheduled / proactive 24·7 runs via Mastra scheduled workflows
 - [x] Inbound external events via Mastra webhook signals
-- [ ] Expose webhook subscribe/unsubscribe as agent tools ("watch acme/repo in this chat")
+- [x] Conversational webhook subscribe/unsubscribe ("watch acme/repo in this chat")
 - [ ] Deliver proactive results straight to a chosen connector (Telegram DM, etc.)
 - [ ] One-line installer (`npm create memclaw`)
 

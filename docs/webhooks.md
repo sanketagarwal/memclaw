@@ -32,9 +32,22 @@ Point the provider's webhook at `https://<tunnel>/webhooks/<source>` (e.g. `/web
 4. Every event is also published to the bus (`memclaw.event.external`), so it's visible
    in the bus monitor and Studio — even with no subscription.
 
-## Subscribe a conversation to a resource
+## Subscribe a conversation — just ask
 
-Bind a thread (a conversation) to an external resource so its events land there:
+The provider gives the agent two tools (`watch-source` / `unwatch-source`), so binding a
+conversation to a resource is conversational. In any chat:
+
+```
+> watch acme/repo in this conversation
+memclaw: Watching acme/repo here — I'll surface its events.
+```
+
+From then on, a webhook whose payload resolves to `acme/repo` is delivered into *this*
+thread as a notification the agent reacts to. To stop: *"stop watching acme/repo."*
+
+### Programmatic (optional)
+
+You can also bind a thread from code:
 
 ```typescript
 import { webhookSignals } from './src/mastra/index.ts';
@@ -45,13 +58,6 @@ webhookSignals.subscribeThread(
 );
 // later: webhookSignals.unsubscribeThread({ threadId, resourceId }, 'acme/repo');
 ```
-
-After this, a webhook whose payload resolves to `acme/repo` is delivered into the
-`my-conversation` thread as a notification the agent can react to.
-
-> **Roadmap:** exposing `subscribe`/`unsubscribe` as agent tools (so you can say "watch
-> acme/repo in this chat" and the agent binds the current conversation) is a natural next
-> step — `WebhookSignalProvider` supports the tool hook, it's just not wired yet.
 
 ## Customizing
 
