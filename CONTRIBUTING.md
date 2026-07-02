@@ -6,7 +6,7 @@ goal is a transparent, observable, local-first agent that anyone can extend.
 ## Getting set up
 
 ```bash
-git clone https://github.com/USER/memclaw.git
+git clone https://github.com/sanketagarwal/memclaw.git
 cd memclaw
 npm install
 npm run setup

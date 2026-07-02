@@ -4,6 +4,8 @@
 
 **An open-source, local-first personal AI agent built on the full [Mastra](https://mastra.ai) stack.**
 
+*Status: v0.1 — a working foundation. Memory, tools, MCP, browser, workspace, connectors, a proactive scheduler, inbound webhooks, and full Studio observability are all wired and verified.*
+
 </div>
 
 ---
@@ -38,7 +40,7 @@ Mastra's batteries-included agent framework — and exposes all of it.
 > Requires **Node 20+** and an OpenAI API key.
 
 ```bash
-git clone https://github.com/USER/memclaw.git
+git clone https://github.com/sanketagarwal/memclaw.git
 cd memclaw
 npm install
 npm run setup     # writes .env, asks for your OpenAI key
