@@ -46,7 +46,7 @@ export interface MemclawConfig {
   scheduleDeliverTo?: string;
   /** Accept inbound webhooks as agent signals (external events). */
   webhooks: boolean;
-  /** Register the example multi-agent research team orchestrator. */
+  /** Register the example Chief-of-Staff team (orchestrator + specialists). */
   team: boolean;
 }
 

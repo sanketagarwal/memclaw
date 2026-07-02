@@ -70,7 +70,7 @@ memclaw's headline feature: **build a team of AI agents that work together and r
 It's built on Mastra's supervisor pattern + Observational Memory + Studio, assembled so you can stand up an *observable* agent team in a few lines.
 
 ```bash
-MEMCLAW_TEAM=true npm run dev    # registers the example "research-team" → http://localhost:4111
+MEMCLAW_TEAM=true npm run dev    # registers the example "chief-of-staff" team → http://localhost:4111
 ```
 
 ## Build your own multi-agent system
@@ -412,10 +412,11 @@ memclaw's headline feature — covered in full above:
 [Build your own multi-agent system](#build-your-own-multi-agent-system). Quick enable:
 
 ```bash
-MEMCLAW_TEAM=true npm run dev    # registers the example "research-team"
+MEMCLAW_TEAM=true npm run dev    # registers the "chief-of-staff" team
 ```
 
-(Verified: `mastra dev` boots and registers both `memclaw` and `research-team`.)
+(Verified: `mastra dev` boots and registers `memclaw`, `chief-of-staff`, and its
+specialists `analyst`, `researcher`, `scribe` — each individually observable in Studio.)
 Delegation is hub-and-spoke; for peer-to-peer/cross-service agents, Mastra has a
 separate A2A protocol.
 
@@ -437,7 +438,7 @@ All configuration is via `.env` (start from [`.env.example`](.env.example)):
 | `MEMCLAW_SCHEDULE` | `false` | Enable the proactive cron run |
 | `MEMCLAW_SCHEDULE_CRON` | `0 8 * * *` | Cron for the proactive run |
 | `MEMCLAW_WEBHOOKS` | `false` | Accept inbound webhooks as agent signals |
-| `MEMCLAW_TEAM` | `false` | Register the example multi-agent research team |
+| `MEMCLAW_TEAM` | `false` | Register the example Chief-of-Staff team (drives chat) |
 | `MEMCLAW_CAPABILITIES` | — | Comma-separated external capability packages |
 | `MEMCLAW_MCP_CONFIG` | `memclaw.mcp.json` | Path to the MCP servers file |
 | `TELEGRAM_BOT_TOKEN` | — | Enable the Telegram channel |

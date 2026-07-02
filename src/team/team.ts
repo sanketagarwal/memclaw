@@ -27,6 +27,10 @@ export interface SpecialistSpec {
   model?: string;
   /** Tools this specialist can call. */
   tools?: Record<string, unknown>;
+  /** A browser provider (e.g. AgentBrowser) — gives this specialist browser tools. */
+  browser?: unknown;
+  /** A workspace (filesystem + sandbox) — gives this specialist file/shell tools. */
+  workspace?: unknown;
   /** Memory scope for this specialist (default 'thread' — individual). */
   memoryScope?: 'thread' | 'resource';
 }
@@ -40,6 +44,8 @@ export function defineSpecialist(spec: SpecialistSpec): Agent {
     instructions: spec.instructions,
     model: spec.model ?? config.model,
     tools: (spec.tools ?? {}) as never,
+    browser: spec.browser as never,
+    workspace: spec.workspace as never,
     memory: createAgentMemory({ scope: spec.memoryScope }),
   });
 }

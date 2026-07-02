@@ -15,7 +15,7 @@ import { loadCapabilities } from '../capabilities/index.ts';
 import { createMemclawAgent } from '../agents/memclaw-agent.ts';
 import { createCheckinWorkflow } from '../workflows/scheduled-checkin.ts';
 import { createWebhookSignals } from '../signals/webhooks.ts';
-import { createResearchTeam } from '../team/index.ts';
+import { createChiefOfStaff } from '../team/index.ts';
 
 const logger = new PinoLogger({ name: 'memclaw', level: 'info' });
 
@@ -39,13 +39,21 @@ const memclawAgent = createMemclawAgent(
 );
 if (webhookSignals) logger.info('[webhooks] inbound event signals enabled');
 
-// Multi-agent: register the example orchestrator + its specialists when enabled.
-// Built as a plain object (no inline conditional spread — that breaks bundling).
+// Multi-agent: register the Chief-of-Staff orchestrator + its specialists when
+// enabled. All are registered top-level so each is individually observable in
+// Studio (and nested in the orchestrator's team trace). Built as a plain object
+// (no inline conditional spread — that breaks Mastra's bundling).
 const agents: Record<string, Agent> = { memclaw: memclawAgent };
-const researchTeam = createResearchTeam(config);
-if (researchTeam) {
-  agents.researchTeam = researchTeam;
-  logger.info('[team] research-team orchestrator registered (manages researcher + writer)');
+const team = createChiefOfStaff(config);
+if (team) {
+  agents['chief-of-staff'] = team.orchestrator;
+  for (const [id, specialist] of Object.entries(team.specialists)) {
+    agents[id] = specialist;
+  }
+  logger.info('[team] chief-of-staff registered', {
+    orchestrator: 'chief-of-staff',
+    specialists: Object.keys(team.specialists),
+  });
 }
 
 // The event bus. Every connector, the dispatcher, the monitor, and Mastra's own

@@ -70,17 +70,20 @@ const res = await team.generate('Research the latest on X and write a short brie
 
 ## Try the shipped example
 
-memclaw includes a working example (`src/team/example.ts`): a `research-team`
-orchestrator managing a **researcher** (web tools) and a **writer**. Turn it on:
+memclaw includes a working example (`src/team/chief-of-staff.ts`): a `chief-of-staff`
+orchestrator managing three specialists — **analyst** (spreadsheet tools),
+**researcher** (a real browser + web), and **scribe** (workspace files). Turn it on:
 
 ```bash
 # .env
 MEMCLAW_TEAM=true
-npm run dev      # research-team appears in Studio alongside memclaw
+npm run dev      # chief-of-staff + analyst/researcher/scribe appear in Studio
 ```
 
-In Studio, call `research-team` and watch the delegation unfold in the trace tree
-— the orchestrator calling each specialist, each with its own memory.
+When enabled, the terminal/chat (`npm run chat`) drives the orchestrator, and **all four
+agents register top-level** — so in Studio you get both the **overall team trace**
+(delegation nested under `chief-of-staff`) and a **per-agent view** for each specialist
+(its own runs and its own memory).
 
 ## Notes
 

@@ -108,7 +108,7 @@ async function runDoctor(): Promise<void> {
     : console.log(`  ${DIM}· webhooks disabled (MEMCLAW_WEBHOOKS=false)${RESET}`);
 
   config.team
-    ? ok('multi-agent', 'research-team orchestrator registered')
+    ? ok('multi-agent', 'chief-of-staff + analyst, researcher, scribe')
     : console.log(`  ${DIM}· multi-agent team disabled (MEMCLAW_TEAM=false)${RESET}`);
 
   const { enabled } = buildChannels();
