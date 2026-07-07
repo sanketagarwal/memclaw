@@ -1,5 +1,5 @@
 import { defineCapability } from '../types.ts';
-import { sheetsListTool, sheetReadTool, sheetSummaryTool } from './tools.ts';
+import { sheetsFindTool, sheetsListTool, sheetReadTool, sheetSummaryTool } from './tools.ts';
 
 /**
  * Spreadsheet analysis — give memclaw the ability to read and analyze local
@@ -13,6 +13,7 @@ export const spreadsheetCapability = defineCapability({
   version: '0.1.0',
   author: 'memclaw',
   tools: {
+    spreadsheetFind: sheetsFindTool,
     spreadsheetSheets: sheetsListTool,
     spreadsheetRead: sheetReadTool,
     spreadsheetSummary: sheetSummaryTool,

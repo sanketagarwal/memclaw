@@ -6,10 +6,25 @@
  * `process.env` directly.
  */
 
+import { dirname, resolve, sep } from 'node:path';
+import { fileURLToPath } from 'node:url';
+
 function bool(value: string | undefined, fallback = false): boolean {
   if (value === undefined) return fallback;
   return /^(1|true|yes|on)$/i.test(value.trim());
 }
+
+/**
+ * Absolute path of the repo root. Relative paths (databases, the workspace)
+ * must anchor here, NOT the process cwd: `npm run chat` runs from the repo root
+ * but `mastra dev` runs a bundle from inside `.mastra/`, and cwd-relative paths
+ * silently give each process its own copy of the data.
+ */
+export const repoRoot = (() => {
+  const here = dirname(fileURLToPath(import.meta.url));
+  const idx = here.indexOf(`${sep}.mastra${sep}`);
+  return idx === -1 ? resolve(here, '..') : here.slice(0, idx);
+})();
 
 export type PubSubBackend = 'memory' | 'unix' | 'redis';
 
@@ -62,7 +77,7 @@ export function loadConfig(): MemclawConfig {
     browser: bool(process.env.MEMCLAW_BROWSER),
     browserHeadless: bool(process.env.MEMCLAW_BROWSER_HEADLESS, true),
     workspace: bool(process.env.MEMCLAW_WORKSPACE),
-    workspaceDir: process.env.MEMCLAW_WORKSPACE_DIR ?? './workspace',
+    workspaceDir: resolve(repoRoot, process.env.MEMCLAW_WORKSPACE_DIR ?? './workspace'),
     capabilities: (process.env.MEMCLAW_CAPABILITIES ?? '')
       .split(',')
       .map((s) => s.trim())

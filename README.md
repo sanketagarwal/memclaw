@@ -377,7 +377,7 @@ written to storage as a trace; Studio reads from that storage.
 npm run dev          # http://localhost:4111
 ```
 
-Studio gives you three views (all powered by the LibSQL + DuckDB stores memclaw configures):
+Studio gives you three views (all powered by the LibSQL store memclaw configures):
 
 - **Traces** — per request: model calls, tool executions, timings, inputs/outputs.
 - **Metrics** — runs, model cost, token usage, latency p50/p95 over time.

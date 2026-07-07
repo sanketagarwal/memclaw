@@ -16,24 +16,34 @@ import {
 } from '@mastra/core/workspace';
 import type { MemclawConfig } from '../config.ts';
 
-export function createWorkspace(config: MemclawConfig): Workspace | undefined {
+export interface WorkspaceOptions {
+  /**
+   * Gate mutating actions (writes/deletes/commands) behind human approval.
+   * Default true. Set false for specialists driven THROUGH an orchestrator:
+   * approvals that propagate up a supervisor delegation currently resume on a
+   * regenerated sub-thread id and the tool call is rejected with
+   * "Received input message with wrong threadId" (Mastra 1.15.1), so a gated
+   * workspace inside a team can never complete a write.
+   */
+  gated?: boolean;
+}
+
+export function createWorkspace(
+  config: MemclawConfig,
+  { gated = true }: WorkspaceOptions = {},
+): Workspace | undefined {
   if (!config.workspace) return undefined;
 
+  // Reads are always free; writes always require reading the file first.
+  const approval = gated ? { requireApproval: true } : {};
   return new Workspace({
     filesystem: new LocalFilesystem({ basePath: config.workspaceDir }),
     sandbox: new LocalSandbox({ workingDirectory: config.workspaceDir }),
     tools: {
-      // Reads are free; mutating actions are gated behind approval.
-      [WORKSPACE_TOOLS.FILESYSTEM.WRITE_FILE]: {
-        requireApproval: true,
-        requireReadBeforeWrite: true,
-      },
-      [WORKSPACE_TOOLS.FILESYSTEM.EDIT_FILE]: {
-        requireApproval: true,
-        requireReadBeforeWrite: true,
-      },
-      [WORKSPACE_TOOLS.FILESYSTEM.DELETE]: { requireApproval: true },
-      [WORKSPACE_TOOLS.SANDBOX.EXECUTE_COMMAND]: { requireApproval: true },
+      [WORKSPACE_TOOLS.FILESYSTEM.WRITE_FILE]: { ...approval, requireReadBeforeWrite: true },
+      [WORKSPACE_TOOLS.FILESYSTEM.EDIT_FILE]: { ...approval, requireReadBeforeWrite: true },
+      [WORKSPACE_TOOLS.FILESYSTEM.DELETE]: { ...approval },
+      [WORKSPACE_TOOLS.SANDBOX.EXECUTE_COMMAND]: { ...approval },
     },
   });
 }

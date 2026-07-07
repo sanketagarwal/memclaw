@@ -1,13 +1,12 @@
+import { join } from 'node:path';
 import { Mastra } from '@mastra/core/mastra';
 import type { Agent } from '@mastra/core/agent';
 import { registerApiRoute } from '@mastra/core/server';
 import { PinoLogger } from '@mastra/loggers';
 import { LibSQLStore } from '@mastra/libsql';
-import { DuckDBStore } from '@mastra/duckdb';
-import { MastraCompositeStore } from '@mastra/core/storage';
 import { Observability, MastraStorageExporter, SensitiveDataFilter } from '@mastra/observability';
 
-import { config } from '../config.ts';
+import { config, repoRoot } from '../config.ts';
 import { createPubSub } from '../bus/pubsub.ts';
 import { BusMonitor } from '../bus/monitor.ts';
 import { TOPICS } from '../bus/topics.ts';
@@ -80,16 +79,13 @@ export const mastra = new Mastra({
   agents,
   workflows,
   pubsub,
-  storage: new MastraCompositeStore({
-    id: 'composite-storage',
-    default: new LibSQLStore({
-      id: 'mastra-storage',
-      url: 'file:./mastra.db',
-    }),
-    domains: {
-      // DuckDB is a great fit for the analytical observability workload.
-      observability: await new DuckDBStore().getStore('observability'),
-    },
+  // One SQLite-backed store for everything, observability included. SQLite
+  // handles concurrent processes (the chat CLI, Studio, a daemon) on the same
+  // file; an embedded analytical store like DuckDB does not — it allows a
+  // single writer, so a second process fails to acquire the file lock.
+  storage: new LibSQLStore({
+    id: 'mastra-storage',
+    url: `file:${join(repoRoot, 'mastra.db')}`,
   }),
   logger,
   observability: new Observability({

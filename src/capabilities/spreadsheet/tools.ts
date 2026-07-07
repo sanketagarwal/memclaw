@@ -5,6 +5,8 @@
  * agent run and shows up in Mastra Studio (timing, inputs, outputs). That's the
  * point: a real, observable skill.
  */
+import { readdir, stat } from 'node:fs/promises';
+import { join } from 'node:path';
 import { createTool } from '@mastra/core/tools';
 import { z } from 'zod';
 import * as XLSXNamespace from 'xlsx';
@@ -27,6 +29,34 @@ function loadSheet(path: string, sheetName?: string): { name: string; rows: Row[
   const rows = XLSX.utils.sheet_to_json<Row>(ws, { defval: null, raw: true });
   return { name, rows };
 }
+
+const SHEET_EXTENSIONS = ['.xlsx', '.xls', '.csv'];
+
+/** Find spreadsheet files in a directory (so an agent can discover them without a filesystem). */
+export const sheetsFindTool = createTool({
+  id: 'spreadsheet-find',
+  description:
+    'List the spreadsheet files (.xlsx/.xls/.csv) in a local directory. Use this first when you are told a spreadsheet is in a folder but not given the exact file path.',
+  inputSchema: z.object({
+    dir: z.string().describe('Absolute or relative path to the directory to search'),
+  }),
+  outputSchema: z.object({
+    dir: z.string(),
+    files: z.array(z.object({ path: z.string(), name: z.string(), sizeBytes: z.number() })),
+  }),
+  execute: async ({ dir }) => {
+    const names = (await readdir(dir)).filter((name) =>
+      SHEET_EXTENSIONS.some((ext) => name.toLowerCase().endsWith(ext)),
+    );
+    const files = await Promise.all(
+      names.map(async (name) => {
+        const path = join(dir, name);
+        return { path, name, sizeBytes: (await stat(path)).size };
+      }),
+    );
+    return { dir, files };
+  },
+});
 
 /** List the sheets in a workbook with their dimensions. */
 export const sheetsListTool = createTool({

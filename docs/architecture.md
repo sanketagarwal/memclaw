@@ -51,8 +51,10 @@ responsive across reconnects.
 
 ## The pieces
 
-- **`src/mastra/index.ts`** — the Mastra instance. Owns storage (LibSQL for app data,
-  DuckDB for the analytical observability domain), the Pino logger, the Observability
+- **`src/mastra/index.ts`** — the Mastra instance. Owns storage (a single LibSQL/SQLite
+  store for app data and observability — SQLite tolerates the chat CLI, Studio, and a
+  daemon sharing one database file, which a single-writer analytical store would not),
+  the Pino logger, the Observability
   config (traces → storage → Studio, with secret redaction), the configured pub/sub
   bus, and a custom `GET /memclaw/bus` route. It also constructs and starts the
   **Bus Monitor** in whatever process imports it.
