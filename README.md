@@ -551,20 +551,6 @@ tour: [docs/architecture.md](docs/architecture.md).
                   └──────────────┘
 ```
 
-## Roadmap
-
-- [ ] Self-authoring capabilities (agent writes its own tools)
-- [ ] More connectors: WhatsApp, Signal, iMessage, email, web widget
-- [ ] More built-in capabilities: GitHub, calendar, search (see [Wanted](CAPABILITIES.md#wanted))
-- [x] Local filesystem + shell via Mastra Workspace
-- [x] Scheduled / proactive 24·7 runs via Mastra scheduled workflows
-- [x] Inbound external events via Mastra webhook signals
-- [x] Conversational webhook subscribe/unsubscribe ("watch acme/repo in this chat")
-- [x] Multi-agent teams — orchestrator + specialists, shared vs individual memory
-- [ ] Self-authoring skills (agent writes its own capabilities)
-- [ ] Deliver proactive results straight to a chosen connector (Telegram DM, etc.)
-- [ ] One-line installer (`npm create memclaw`)
-
 ## Contributing
 
 The fastest way to grow memclaw is a **capability** — ship a folder or an npm package.
