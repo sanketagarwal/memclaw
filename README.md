@@ -164,36 +164,8 @@ All three are self-hosted, persistent personal-agent projects. Honestly:
 | **Stack** | TypeScript on Mastra, fully hackable | — | — |
 | **Best for** | an observable agent *team* you own & extend | broad ready-made automation *today* | autonomous long-horizon knowledge work |
 
-**The honest take:** OpenClaw and Hermes are mature, with large ecosystems — and Hermes has self-authoring skills memclaw doesn't (yet). memclaw's distinct edge is **observable multi-agent teams with a clean shared-vs-individual memory split**, standing on a maintained framework (Mastra) rather than a single project's runtime. Choose memclaw when you want to **build and *watch*** your own agent team; choose the others for breadth and maturity right now.
 
-*Sources: [The New Stack](https://thenewstack.io/persistent-ai-agents-compared/) · [Turing Post](https://www.turingpost.com/p/hermes) · [MindStudio](https://www.mindstudio.ai/blog/hermes-agent-vs-openclaw-comparison).*
-
-## memclaw vs. raw Mastra — what it actually adds
-
-**Be clear up front: memclaw is a Mastra *application*, not a replacement for Mastra.**
-Every headline capability below is **Mastra** doing the work — if you built directly on
-[Mastra](https://mastra.ai) you'd have all of it. What memclaw adds is **assembly,
-opinions, and a few thin convention layers** that turn the framework into a ready-to-run,
-extensible assistant. Here's exactly what — and where each piece lives, so you can read it
-yourself.
-
-### These are pure Mastra (memclaw adds nothing here)
-
-| Capability | Provided by | Learn more |
-| --- | --- | --- |
-| Memory (observational + working) | `@mastra/memory` | [Observational Memory](https://mastra.ai/docs/memory/observational-memory) |
-| Browser | `@mastra/agent-browser` | [Browser](https://mastra.ai/docs/browser/overview) |
-| Files + shell | `@mastra/core` Workspace | [Workspaces](https://mastra.ai/docs/workspace/overview) |
-| Channels (Telegram/Slack/Discord) | `@mastra/core` channels | [Channels](https://mastra.ai/docs/agents/channels) |
-| Scheduler | Mastra scheduled workflows | [Scheduled workflows](https://mastra.ai/docs/workflows/scheduled-workflows) |
-| Webhooks → signals | `WebhookSignalProvider` | [Signal providers](https://mastra.ai/docs/agents/signal-providers) |
-| Observability + Studio | `@mastra/observability` | [Studio observability](https://mastra.ai/docs/studio/observability) |
-| Pub/sub bus | `@mastra/core` events | [PubSub](https://mastra.ai/reference/pubsub/base) |
-| Multi-agent supervisor | Mastra `Agent({ agents })` | [Supervisor agents](https://mastra.ai/docs/agents/supervisor-agents) |
-
-If all you need is the above, **use Mastra directly.**
-
-### What memclaw adds on top (with pointers to the code)
+### What memclaw adds on top of Mastra(with pointers to the code)
 
 **1. Pre-assembly + config-as-the-interface.** One agent/team pre-wired with the *whole*
 stack, every feature toggled by a `MEMCLAW_*` env var — no code to turn things on.
@@ -229,11 +201,6 @@ a product*, not a codebase. → [`src/cli.ts`](src/cli.ts) · [`scripts/setup.mj
   yourself, (b) a shape others can **extend without being Mastra experts** (drop a folder,
   install a package, flip an env flag), and (c) a **multi-agent team + observability** out
   of the box.
-
-**One analogy that captures it:** Mastra is the Linux kernel and drivers; memclaw is a
-*distro* — the same power, assembled and opinionated, installable, with a package
-convention so people can add to it.
-
 ---
 
 ## Run every feature
